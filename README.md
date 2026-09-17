@@ -3,7 +3,15 @@
 > **The official online storefront for Crown & Cross football jerseys.**  
 > *"Some wear fashion. We wear football."* • *"Wear Your Club. Wear Your Story."*
 
-Built with **Next.js (App Router)** and designed with an **Olive Green & Gold** sports luxury aesthetic. Deployed seamlessly to **Vercel**.
+Built with **Next.js (App Router)** and designed with an **Olive Green & Gold** sports luxury aesthetic. Deployed seamlessly to **Vercel** at **[crownandcross.vercel.app](https://crownandcross.vercel.app/)**.
+
+---
+
+## 🌐 Live Production & Architecture
+
+- **Live Storefront URL:** [https://crownandcross.vercel.app](https://crownandcross.vercel.app)
+- **Parent Management Repository:** [`krishnakanthb13/CC-Inventory-Stock`](https://github.com/krishnakanthb13/CC-Inventory-Stock)
+- **Deployment Platform:** Vercel (Production Next.js 14 App Router)
 
 ---
 
