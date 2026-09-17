@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Truck, ShieldCheck, RefreshCw, MessageCircle, ArrowUp } from 'lucide-react';
+import { Sparkles, Truck, ShieldCheck, RefreshCw, MessageCircle, ArrowUp, Instagram } from 'lucide-react';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
 
 export default function Footer() {
@@ -93,6 +93,25 @@ export default function Footer() {
                 <span className="story-arrow">→</span>
               </Link>
             </div>
+
+            {/* Official Instagram Account Follow */}
+            <div className="brand-insta-follow">
+              <a
+                href="https://www.instagram.com/_crown_and_cross_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-insta-card"
+                title="Follow Crown & Cross on Instagram (@_crown_and_cross_)"
+              >
+                <div className="footer-insta-icon-badge">
+                  <Instagram size={18} />
+                </div>
+                <div className="footer-insta-meta">
+                  <span className="footer-insta-label">Follow our drops on Instagram</span>
+                  <span className="footer-insta-handle">@_crown_and_cross_</span>
+                </div>
+              </a>
+            </div>
           </div>
 
           {/* Quick Shopping Links */}
@@ -148,6 +167,18 @@ export default function Footer() {
                   title="Contact Us on WhatsApp"
                 >
                   💬 Contact Us
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.instagram.com/_crown_and_cross_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-link footer-insta-link-item"
+                  title="Follow Crown & Cross on Instagram (@_crown_and_cross_)"
+                >
+                  <Instagram size={14} className="footer-inline-icon" />
+                  <span>Instagram: @_crown_and_cross_</span>
                 </a>
               </li>
               <li>
@@ -236,6 +267,17 @@ export default function Footer() {
               <span>Powered by Next.js</span>
               <span>•</span>
               <span>Founder: Jason Clement</span>
+              <span>•</span>
+              <a
+                href="https://www.instagram.com/_crown_and_cross_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-bottom-insta-link"
+                title="Follow Crown & Cross on Instagram"
+              >
+                <Instagram size={12} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px' }} />
+                <span>@_crown_and_cross_</span>
+              </a>
             </div>
 
             <button

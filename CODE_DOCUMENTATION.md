@@ -27,6 +27,7 @@ CC-Hosting-Public/
 │   ├── JerseyCarousel.jsx       # Swipe/arrow/dot-count responsive carousel
 │   ├── CartDrawer.jsx           # Slide-out cart with shipping meter & checkout
 │   ├── UpiModal.jsx             # Client-side dynamic UPI QR code generator
+│   ├── SearchModal.jsx          # Live product search modal with filter chips & thumbnails
 │   └── LayoutClientWrapper.jsx  # Client boundary for global modals
 ├── context/
 │   └── CartContext.jsx          # React Context for cart state & LocalStorage
@@ -176,3 +177,16 @@ The storefront is engineered for seamless rendering across **Large**, **Medium**
 10. **Static Accent Styling (`globals.css`):** Configured `.retro-highlight` and `.retro-mobile-link` with a permanent **Vintage Amber** (`#f59e0b`) accent with identical `:hover` color rules, ensuring Retro Kits remain a distinct visual anchor without flickering or distracting animations.
 11. **Centered Manifesto Architecture (`app/about/page.jsx`):** Employs a centered flex-column container (`display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center`) with `display: block` and `objectFit: 'cover'` on the brand emblem, resolving inline baseline misalignment and providing responsive `clamp(28px, 5vw, 42px)` typography.
 12. **Priority Trust Reordering (`components/Footer.jsx`):** Elevated `UPI Payee: Jason Clement` to position #1 under "Support & Orders" to provide immediate merchant validation above communication links.
+13. **Dual-Track Infinite Announcement Marquee (`globals.css` & `Navbar.jsx`):** On screens $\le 860\text{px}$, the top announcement bar displays two mirrored `.announcement-track` rows governed by `@keyframes bannerMarquee` (26s linear loop). Eliminates text truncation while supporting touch horizontal swiping and hover pause.
+14. **Universal Product Search Engine (`components/SearchModal.jsx`):**
+    - Accessible via header magnifying glass, mobile menu drawer, and global keyboard shortcut (`Ctrl+K` / `Cmd+K`).
+    - Queries `products.json` dynamically with multi-keyword token matching (`name`, `team`, `season`, `subCategory`, `description`).
+    - Surfaces exact kit names, quality badges, live pricing, stock availability, and quick suggestion pills ("Real Madrid", "Argentina", "Retro").
+    - 1-click navigation routes directly to `/product/[id]` with auto modal closure.
+15. **Cross-Platform Instagram Integration:**
+    - Header action icon button (`.nav-insta-btn`) adjacent to WhatsApp on desktop and mobile viewports.
+    - Mobile drawer entry (`.mobile-dropdown-insta`).
+    - Rich footer brand card with custom Instagram gradient icon, inline support link, and bottom metadata handle pointing to `https://www.instagram.com/_crown_and_cross_`.
+16. **Product Detail Page Related Kits Integrity (`app/product/[id]/page.jsx`):**
+    - Fixed related kits variable mapping (`relatedKits`) matching the JSX renderer to prevent client-side runtime reference exceptions during product drilldown.
+

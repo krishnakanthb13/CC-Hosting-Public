@@ -114,6 +114,9 @@ By default, the app uses Resend's sandbox (`onboarding@resend.dev`) and delivers
   - Distinct static **Vintage Amber** (`#f59e0b`) highlight for **Retro Kits** that remains static on hover.
   - Action-oriented **"Contact Us"** header button replacing raw phone numbers for a cleaner, modern look.
   - Mobile drawer with structured **"Contact Us (WhatsApp)"** action.
+  - **Horizontal Scrolling Announcement Marquee**: Smooth infinite loop ticker on narrow screens ($\le 860\text{px}$) with touch-drag scrolling and hover pause.
+  - **Official Instagram Profile Integration**: Instant access to `@_crown_and_cross_` via header button beside WhatsApp, mobile drawer, and footer brand card.
+  - **Global Interactive Product Search Modal**: Magnifying glass trigger and `Ctrl+K`/`Cmd+K` shortcut revealing real-time product matching, available kit names, live thumbnails, pricing, and 1-click PDP navigation.
 
 ---
 
@@ -145,6 +148,14 @@ RESEND_FROM_EMAIL=Crown & Cross <onboarding@resend.dev>
 ## 📜 Changelog
 
 ### [Unreleased]
+#### Added
+- **Global Interactive Product Search**: Added top magnifying glass button, mobile drawer search entry, and `Ctrl+K` shortcut opening `SearchModal.jsx` with real-time search, available kit names, thumbnails, pricing, and 1-click drilldown navigation.
+- **Official Instagram Channel Integration**: Added clickable Instagram button (`nav-insta-btn`) beside WhatsApp in navbar, drawer link, and footer brand card for `@_crown_and_cross_`.
+- **Responsive Announcement Bar Marquee**: Added dual-track continuous horizontal scrolling ticker on narrow screens ($\le 860\text{px}$) with manual touch horizontal scroll support and auto-pause on hover/tap.
+
+#### Fixed
+- **Product Drilldown Client Exception**: Fixed `ReferenceError: relatedKits is not defined` on `/product/[id]` by correcting the related kits variable mapping.
+
 #### Changed
 - **Header**: Replaced raw phone number display with clean, action-oriented **Contact Us** button linking directly to WhatsApp.
 - **Header**: Styled **Retro Kits** navigation link with a distinct static **Vintage Amber** (`#f59e0b`) accent with consistent hover rules.
@@ -161,6 +172,7 @@ RESEND_FROM_EMAIL=Crown & Cross <onboarding@resend.dev>
 ---
 
 ## 📞 Support & Inquiries
+- **Instagram:** [@_crown_and_cross_](https://www.instagram.com/_crown_and_cross_)
 - **WhatsApp:** [Contact Us](https://wa.me/917695924602) (+91 76959 24602)
 - **Email:** [Email Us](mailto:crownandcross29@gmail.com) (crownandcross29@gmail.com)
 - **Base:** Chennai, Tamil Nadu, India

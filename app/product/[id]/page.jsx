@@ -92,7 +92,7 @@ export default function ProductDetailPage() {
   const directWhatsAppText = `Hello Crown & Cross, I would like to buy:\n\nKit: ${product.name}\nQuality: ${product.subCategory}\nSize: ${selectedSize}\nQuantity: ${quantity}\nPrice: ₹${product.price * quantity}\n\nPlease confirm availability!`;
   const directWhatsAppUrl = getWhatsAppUrl(directWhatsAppText);
 
-  const relatedProducts = allProducts
+  const relatedKits = allProducts
     .filter((p) => p.id !== product.id && (p.category === product.category || p.subCategory === product.subCategory))
     .slice(0, 3);
 
