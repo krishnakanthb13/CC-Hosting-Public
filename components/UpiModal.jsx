@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { X, Check, Copy, MessageCircle, QrCode } from 'lucide-react';
+import { X, Check, Copy, MessageCircle, QrCode, Zap } from 'lucide-react';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
 
 export default function UpiModal({ orderDetails, onClose }) {
@@ -138,9 +138,29 @@ export default function UpiModal({ orderDetails, onClose }) {
             {copiedOrder ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
           </button>
         </div>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+        <p className="upi-scan-text" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '18px' }}>
           Scan using any UPI App (GPay, PhonePe, Paytm, CRED, BHIM)
         </p>
+
+        {/* ONLY FOR MOBILE VIEW: Opens any installed UPI app on Android and iPhone */}
+        <div className="mobile-only-upi-block">
+          <a
+            href={upiUri}
+            className="mobile-upi-open-btn"
+            title="Open installed UPI app (Google Pay, PhonePe, Paytm, CRED, BHIM)"
+          >
+            <div className="mobile-upi-open-icon">
+              <Zap size={22} fill="currentColor" />
+            </div>
+            <div className="mobile-upi-open-text">
+              <span className="mobile-upi-open-title">⚡ Pay ₹{amount} with Installed UPI App</span>
+              <span className="mobile-upi-open-sub">Tap to open GPay • PhonePe • Paytm • CRED • BHIM</span>
+            </div>
+          </a>
+          <div className="mobile-upi-or-divider">
+            <span>OR SCAN QR / COPY UPI ID BELOW</span>
+          </div>
+        </div>
 
         {/* QR Display */}
         <div

@@ -4,9 +4,10 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCart } from '../context/CartContext';
 import UpiModal from './UpiModal';
+import { AlertTriangle, X } from 'lucide-react';
 
 export default function LayoutClientWrapper() {
-  const { activeUpiOrder, setActiveUpiOrder } = useCart();
+  const { activeUpiOrder, setActiveUpiOrder, stockToast, dismissStockToast } = useCart();
   const pathname = usePathname();
 
   // Automatically scroll to the very top on every page navigation
@@ -24,12 +25,57 @@ export default function LayoutClientWrapper() {
     }
   }, [pathname]);
 
-  if (!activeUpiOrder) return null;
-
   return (
-    <UpiModal
-      orderDetails={activeUpiOrder}
-      onClose={() => setActiveUpiOrder(null)}
-    />
+    <>
+      {stockToast && (
+        <div className="stock-toast-container">
+          <div className="stock-toast" role="alert">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(245, 158, 11, 0.18)',
+                color: '#f59e0b',
+                flexShrink: 0
+              }}
+            >
+              <AlertTriangle size={16} strokeWidth={2.5} />
+            </div>
+            <div style={{ flex: 1, color: '#f8faf9', fontSize: '13px', lineHeight: 1.4 }}>
+              {stockToast.message}
+            </div>
+            <button
+              onClick={dismissStockToast}
+              aria-label="Dismiss alert"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeUpiOrder && (
+        <UpiModal
+          orderDetails={activeUpiOrder}
+          onClose={() => setActiveUpiOrder(null)}
+        />
+      )}
+    </>
   );
 }
+

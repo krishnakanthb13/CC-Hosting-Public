@@ -189,4 +189,30 @@ The storefront is engineered for seamless rendering across **Large**, **Medium**
     - Rich footer brand card with custom Instagram gradient icon, inline support link, and bottom metadata handle pointing to `https://www.instagram.com/_crown_and_cross_`.
 16. **Product Detail Page Related Kits Integrity (`app/product/[id]/page.jsx`):**
     - Fixed related kits variable mapping (`relatedKits`) matching the JSX renderer to prevent client-side runtime reference exceptions during product drilldown.
+    - Added case-insensitive, URL-decoded ID matching (`decodeURIComponent(String(id)).toLowerCase()`) for resilient routing.
+17. **Two Products Per Row Mobile Grid (`ProductCard.jsx`, `globals.css`):**
+    - Under `@media (max-width: 640px)`, `.catalog-grid` and `.featured-grid` activate `grid-template-columns: repeat(2, minmax(0, 1fr)) !important` with an 8px grid gap.
+    - Card media `.card-image-wrap` enforces a fixed `aspect-ratio: 1 / 1.15` to ensure consistent visual alignment across varying kit photography.
+    - Mobile card typography scales via `.product-card h3 { font-size: 13px }` with multi-line clamping and tight pill tags (`font-size: 9px`).
+18. **Mobile-Only 1-Tap UPI App Launcher (`UpiModal.jsx`, `CartDrawer.jsx`, `app/product/[id]/page.jsx`):**
+    - Implemented native `upi://pay?pa=...&pn=...&am=...&tn=...&cu=INR` intent deep linking.
+    - Displayed strictly on mobile viewports (`<= 768px`) via `.mobile-only-upi-block`, `.mobile-only-cart-upi-btn`, and `.mobile-only-pdp-upi-btn`.
+    - Clicking directly invokes installed UPI applications (Google Pay, PhonePe, Paytm, CRED, BHIM) on Android and iPhone devices without forcing users to scan their own screens.
+19. **Mobile Section Spacing & Bottom Padding Optimization (`globals.css`, `app/page.jsx`, `app/product/[id]/page.jsx`):**
+    - Tightened desktop-scale section margins (`margin: 90px auto 0` down to `24px`) across catalog and story sections on mobile devices.
+    - Reduced footer padding and `.pdp-container` / `.pdp-related-section` bottom margins on screens $\le 640\text{px}$, eliminating blank dead scrolls below product tiles.
+20. **Size-Specific Stock Quantity Architecture (`products.json`, `app/product/[id]/page.jsx`, `components/ProductCard.jsx`):**
+    - **Data Schema (`stockBySize`)**: Each jersey entry maintains an explicit size-to-quantity map: `{ "S": 4, "M": 8, "L": 8, "XL": 3, "XXL": 1 }`.
+    - **Dynamic PDP Size Selector**: Inspects `stockBySize[size] ?? 0`. Sizes with 0 stock are given `.sold-out` styling (50% opacity, strikethrough line, `not-allowed` cursor) and disabled from selection.
+    - **Clean In-Stock Display & Low-Stock Urgency**: When stock is $> 2$, displays clean `● In Stock` without unit count leakage. When remaining stock for the chosen size drops to $\le 2$, dynamically triggers `⚡ Only X left in Size [Size]!`.
+    - **Auto-Selection**: Initializes PDP state and quick-add actions to the first in-stock size rather than blindly picking `sizes[0]`.
+    - **Quantity Stepper Guard**: Max purchase quantity dynamically caps at `availableStockForSize`, preventing over-ordering.
+21. **Minimalist Icon-Only Header Actions & Footer Contact Standardization (`Navbar.jsx`, `Footer.jsx`, `globals.css`):**
+    - Simplified header Search (`.nav-search-btn`) and Instagram (`.nav-insta-btn`) to circular `38px x 38px` icon buttons with centered Lucide icons (`Search`, `Instagram`), removing text spans for an uncluttered luxury aesthetic.
+    - Standardized footer support links strictly as `Contact Us: Whatsapp` and `Contact Us: Instagram` with matching hover effects.
+22. **Limited Stock Notification & Cart Overflow Protection (`CartContext.jsx`, `LayoutClientWrapper.jsx`, `CartDrawer.jsx`):**
+    - **Stock Toast System (`stockToast`, `showStockToast`)**: Dispatches auto-dismissing (3.8s) floating glassmorphism amber toasts with `AlertTriangle` icon on illegal increment attempts.
+    - **In-Cart Stock Deduction**: PDP dynamically cross-checks cart quantities for the selected size (`remainingStock = availableStock - inCartQty`).
+    - **Button Auto-Disable**: Automatically disables the Add to Cart button with text `All Stock in Cart (X/X)` and an inline alert banner when all available inventory for that size is already in the cart.
+    - **Tactile Feedback**: Implemented `animate-shake` on the quantity stepper and disabled `+` buttons across both PDP and slide-out Cart Drawer when inventory ceiling is reached.
 

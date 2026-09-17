@@ -98,6 +98,25 @@ export function CartProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeUpiOrder, setActiveUpiOrder] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [stockToast, setStockToast] = useState(null);
+
+  const showStockToast = (message) => {
+    const id = Date.now();
+    setStockToast({ message, id });
+  };
+
+  const dismissStockToast = () => {
+    setStockToast(null);
+  };
+
+  // Auto-dismiss stock toast after 3.8 seconds
+  useEffect(() => {
+    if (!stockToast) return;
+    const timer = setTimeout(() => {
+      setStockToast(null);
+    }, 3800);
+    return () => clearTimeout(timer);
+  }, [stockToast]);
 
   // Load cart and customer from scoped storage on mount
   useEffect(() => {
@@ -134,12 +153,34 @@ export function CartProvider({ children }) {
   }, [customer, isLoaded]);
 
   const addToCart = (product, size = 'M', quantity = 1) => {
+    const itemKey = `${product.id}_${size}_${product.subCategory || 'std'}`;
+    const maxStock = product.stockBySize?.[size] !== undefined
+      ? Number(product.stockBySize[size])
+      : (product.inStock !== false ? 99 : 0);
+
+    const existing = items.find((i) => i.key === itemKey);
+    const currentQty = existing ? existing.quantity : 0;
+
+    if (maxStock <= 0) {
+      showStockToast(`Size ${size} is currently sold out.`);
+      return false;
+    }
+
+    if (currentQty >= maxStock) {
+      showStockToast(`Limited Stock: You already have all ${maxStock} available units of Size ${size} in your cart!`);
+      return false;
+    }
+
+    const requestedTotal = currentQty + quantity;
+    const allowedQty = Math.min(requestedTotal, maxStock);
+    const addedUnits = allowedQty - currentQty;
+
     setItems((prev) => {
-      const itemKey = `${product.id}_${size}_${product.subCategory || 'std'}`;
-      const existing = prev.find((i) => i.key === itemKey);
       if (existing) {
         return prev.map((i) =>
-          i.key === itemKey ? { ...i, quantity: i.quantity + quantity } : i
+          i.key === itemKey
+            ? { ...i, quantity: allowedQty, stockBySize: product.stockBySize || i.stockBySize }
+            : i
         );
       }
       return [
@@ -155,11 +196,18 @@ export function CartProvider({ children }) {
           category: product.category,
           subCategory: product.subCategory,
           size,
-          quantity
+          quantity: allowedQty,
+          stockBySize: product.stockBySize
         }
       ];
     });
+
+    if (requestedTotal > maxStock) {
+      showStockToast(`Limited Stock: Capped to remaining ${addedUnits} unit${addedUnits > 1 ? 's' : ''} (Max ${maxStock} available for Size ${size}).`);
+    }
+
     setIsCartOpen(true);
+    return true;
   };
 
   const updateQuantity = (key, delta) => {
@@ -167,8 +215,17 @@ export function CartProvider({ children }) {
       prev
         .map((i) => {
           if (i.key === key) {
+            const maxStock = i.stockBySize?.[i.size] !== undefined
+              ? Number(i.stockBySize[i.size])
+              : 99;
+
+            if (delta > 0 && i.quantity >= maxStock) {
+              showStockToast(`Limited Stock: Only ${maxStock} unit${maxStock > 1 ? 's' : ''} available for Size ${i.size}.`);
+              return i;
+            }
+
             const nextQty = i.quantity + delta;
-            return nextQty > 0 ? { ...i, quantity: nextQty } : null;
+            return nextQty > 0 ? { ...i, quantity: Math.min(nextQty, maxStock) } : null;
           }
           return i;
         })
@@ -214,7 +271,10 @@ export function CartProvider({ children }) {
         setActiveUpiOrder,
         customer,
         setCustomer,
-        isLoaded
+        isLoaded,
+        stockToast,
+        showStockToast,
+        dismissStockToast
       }}
     >
       {children}

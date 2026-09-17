@@ -128,8 +128,7 @@ export default function Navbar() {
               title="Search football kits (Ctrl+K)"
               aria-label="Search football kits"
             >
-              <Search size={15} />
-              <span className="hide-tablet-mobile">Search</span>
+              <Search size={16} />
             </button>
 
             {/* Instagram Official Profile Link */}
@@ -141,8 +140,7 @@ export default function Navbar() {
               title="Follow Crown & Cross on Instagram (@_crown_and_cross_)"
               aria-label="Instagram Profile"
             >
-              <Instagram size={15} />
-              <span className="hide-tablet-mobile">Instagram</span>
+              <Instagram size={16} />
             </a>
 
             {/* WhatsApp Direct Chat */}

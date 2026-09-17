@@ -86,6 +86,13 @@
         "XL",
         "XXL"
       ],
+      "stockBySize": {
+        "S": 4,
+        "M": 8,
+        "L": 8,
+        "XL": 3,
+        "XXL": 1
+      },
       "images": [
         "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=800&q=80"
@@ -112,6 +119,11 @@
         "L",
         "XL"
       ],
+      "stockBySize": {
+        "M": 6,
+        "L": 7,
+        "XL": 2
+      },
       "images": [
         "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=800&q=80"
@@ -140,6 +152,13 @@
         "XL",
         "XXL"
       ],
+      "stockBySize": {
+        "S": 5,
+        "M": 10,
+        "L": 9,
+        "XL": 4,
+        "XXL": 2
+      },
       "images": [
         "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=800&q=80"
       ],
@@ -164,6 +183,11 @@
         "L",
         "XL"
       ],
+      "stockBySize": {
+        "M": 5,
+        "L": 5,
+        "XL": 2
+      },
       "images": [
         "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=80"
       ],
@@ -190,6 +214,12 @@
         "L",
         "XL"
       ],
+      "stockBySize": {
+        "S": 3,
+        "M": 8,
+        "L": 7,
+        "XL": 2
+      },
       "images": [
         "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80"
       ],

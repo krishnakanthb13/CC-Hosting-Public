@@ -5,11 +5,27 @@ import { useCart } from '../context/CartContext';
 import { Plus, Sparkles } from 'lucide-react';
 
 export default function ProductCard({ product }) {
-  const { addToCart } = useCart();
+  const { items, addToCart, showStockToast } = useCart();
   const discountPercent =
     product.mrp && product.mrp > product.price
       ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
       : null;
+
+  const totalStock = product.stockBySize
+    ? Object.values(product.stockBySize).reduce((a, b) => a + Number(b || 0), 0)
+    : (product.inStock ? 10 : 0);
+  const isCardOutOfStock = totalStock <= 0;
+
+  const availableSize = (product.sizes || ['S', 'M', 'L', 'XL']).find((sz) => {
+    const szStock = product.stockBySize?.[sz] !== undefined
+      ? Number(product.stockBySize[sz])
+      : (product.inStock !== false ? 10 : 0);
+    const cartItem = items?.find((i) => i.id === product.id && i.size === sz);
+    const inCart = cartItem ? cartItem.quantity : 0;
+    return szStock > inCart;
+  });
+
+  const isCardAllInCart = !isCardOutOfStock && !availableSize;
 
   return (
     <div
@@ -28,6 +44,7 @@ export default function ProductCard({ product }) {
       {/* Discount Badge */}
       {discountPercent && (
         <span
+          className="card-discount-badge"
           style={{
             position: 'absolute',
             top: '12px',
@@ -49,6 +66,7 @@ export default function ProductCard({ product }) {
       {/* Retro/Featured Star */}
       {product.featured && (
         <span
+          className="card-featured-badge"
           style={{
             position: 'absolute',
             top: '12px',
@@ -73,6 +91,7 @@ export default function ProductCard({ product }) {
       {/* Image Link */}
       <Link
         href={`/product/${product.id}`}
+        className="card-img-link"
         style={{
           display: 'block',
           position: 'relative',
@@ -96,10 +115,11 @@ export default function ProductCard({ product }) {
       </Link>
 
       {/* Content */}
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div className="card-content" style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Category & Sub-Category badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+        <div className="card-badge-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
           <span
+            className="card-category-pill"
             style={{
               fontSize: '11.5px',
               fontWeight: 800,
@@ -114,7 +134,7 @@ export default function ProductCard({ product }) {
           >
             {product.category}
           </span>
-          <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          <span className="card-sub-category" style={{ fontSize: '12.5px', color: 'var(--text-secondary)', fontWeight: 600 }}>
             {product.subCategory}
           </span>
         </div>
@@ -122,6 +142,7 @@ export default function ProductCard({ product }) {
         {/* Title */}
         <Link href={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
           <h3
+            className="card-title"
             style={{
               fontSize: '14.5px',
               fontWeight: 700,
@@ -140,19 +161,19 @@ export default function ProductCard({ product }) {
         </Link>
 
         {/* Team & Season */}
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', fontWeight: 500 }}>
+        <p className="card-team" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', fontWeight: 500 }}>
           {product.team} • {product.season}
         </p>
 
         {/* Price Row & Quick Add */}
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+        <div className="card-footer" style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-              <span style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text-primary)' }}>
+              <span className="card-price" style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 ₹{product.price}
               </span>
               {product.mrp && product.mrp > product.price && (
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                <span className="card-mrp" style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
                   ₹{product.mrp}
                 </span>
               )}
@@ -160,24 +181,37 @@ export default function ProductCard({ product }) {
           </div>
 
           <button
-            onClick={() => addToCart(product, product.sizes?.[0] || 'M', 1)}
+            className="card-add-btn"
+            disabled={isCardOutOfStock || isCardAllInCart}
+            onClick={() => {
+              if (isCardAllInCart) {
+                showStockToast?.(`All available stock for "${product.name}" is already in your cart!`);
+                return;
+              }
+              if (availableSize) {
+                addToCart(product, availableSize, 1);
+              }
+            }}
             style={{
               padding: '8px 14px',
               borderRadius: '10px',
-              backgroundColor: 'var(--gold-primary)',
-              color: '#0d140f',
-              border: 'none',
+              backgroundColor: (isCardOutOfStock || isCardAllInCart) ? 'var(--bg-elevated)' : 'var(--gold-primary)',
+              color: (isCardOutOfStock || isCardAllInCart) ? 'var(--text-muted)' : '#0d140f',
+              border: (isCardOutOfStock || isCardAllInCart) ? '1px solid var(--border-subtle)' : 'none',
               fontSize: '13px',
               fontWeight: 800,
-              cursor: 'pointer',
+              cursor: (isCardOutOfStock || isCardAllInCart) ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '5px',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              opacity: (isCardOutOfStock || isCardAllInCart) ? 0.7 : 1
             }}
           >
-            <Plus size={14} strokeWidth={3} />
-            <span>Add</span>
+            {!isCardOutOfStock && !isCardAllInCart && <Plus size={14} strokeWidth={3} />}
+            <span>
+              {isCardOutOfStock ? 'Sold Out' : isCardAllInCart ? 'In Cart' : 'Add'}
+            </span>
           </button>
         </div>
       </div>

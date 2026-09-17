@@ -14,12 +14,15 @@ import {
   ShoppingBag,
   MessageCircle,
   X,
-  ChevronRight
+  ChevronRight,
+  Zap,
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { items, addToCart, showStockToast } = useCart();
 
   const [product, setProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
@@ -27,6 +30,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showSizeModal, setShowSizeModal] = useState(false);
+  const [shakeWarning, setShakeWarning] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -35,15 +39,22 @@ export default function ProductDetailPage() {
       .then((data) => {
         const list = data.products || [];
         setAllProducts(list);
-        const match = list.find((p) => p.id === id || p.slug === id);
+        const rawId = Array.isArray(id) ? id[0] : id;
+        const normalizedId = rawId ? decodeURIComponent(String(rawId)).toLowerCase().trim() : '';
+        const match = list.find(
+          (p) =>
+            (p.id && p.id.toLowerCase() === normalizedId) ||
+            (p.slug && p.slug.toLowerCase() === normalizedId)
+        );
         if (match) {
           setProduct(match);
           if (match.sizes && match.sizes.length > 0) {
-            setSelectedSize(match.sizes[0]);
+            const firstInStock = match.sizes.find((sz) => (match.stockBySize?.[sz] !== undefined ? match.stockBySize[sz] > 0 : (match.inStock !== false))) || match.sizes[0];
+            setSelectedSize(firstInStock);
           }
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => console.error('Error fetching product data:', err))
       .finally(() => {
         setLoading(false);
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -92,8 +103,14 @@ export default function ProductDetailPage() {
   const directWhatsAppText = `Hello Crown & Cross, I would like to buy:\n\nKit: ${product.name}\nQuality: ${product.subCategory}\nSize: ${selectedSize}\nQuantity: ${quantity}\nPrice: ₹${product.price * quantity}\n\nPlease confirm availability!`;
   const directWhatsAppUrl = getWhatsAppUrl(directWhatsAppText);
 
-  const relatedKits = allProducts
-    .filter((p) => p.id !== product.id && (p.category === product.category || p.subCategory === product.subCategory))
+  const relatedKits = (allProducts || [])
+    .filter(
+      (p) =>
+        p &&
+        p.id !== product.id &&
+        ((product.category && p.category === product.category) ||
+          (product.subCategory && p.subCategory === product.subCategory))
+    )
     .slice(0, 3);
 
   const categoryHash = product.category
@@ -101,7 +118,7 @@ export default function ProductDetailPage() {
     : '/#catalog';
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '40px auto 80px', padding: '0 24px' }}>
+    <div style={{ maxWidth: '1280px', margin: '40px auto 80px', padding: '0 24px' }} className="pdp-container">
       {/* Breadcrumbs */}
       <nav
         aria-label="Breadcrumb"
@@ -294,107 +311,340 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {(product.sizes || ['S', 'M', 'L', 'XL']).map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  onClick={() => setSelectedSize(sz)}
-                  style={{
-                    width: '48px',
-                    height: '44px',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    backgroundColor: selectedSize === sz ? 'var(--gold-primary)' : 'var(--bg-surface)',
-                    color: selectedSize === sz ? '#0d140f' : 'var(--text-primary)',
-                    border: `1px solid ${selectedSize === sz ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
-                    transition: 'all 0.15s'
-                  }}
-                >
-                  {sz}
-                </button>
-              ))}
+            {/* Size Selector with Live Stock Badges */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {(product.sizes || ['S', 'M', 'L', 'XL']).map((sz) => {
+                const sizeStock = product.stockBySize?.[sz] !== undefined
+                  ? Number(product.stockBySize[sz])
+                  : (product.inStock ? 10 : 0);
+                const isOutOfStock = sizeStock <= 0;
+                // Only show "X left" if stock is 2 or less. If more, show clean size letter!
+                const isLowStock = sizeStock > 0 && sizeStock <= 2;
+                const isSelected = selectedSize === sz;
+
+                return (
+                  <button
+                    key={sz}
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => {
+                      setSelectedSize(sz);
+                      setQuantity(1);
+                    }}
+                    style={{
+                      minWidth: '54px',
+                      height: '46px',
+                      padding: '4px 10px',
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                      backgroundColor: isSelected ? 'var(--gold-primary)' : 'var(--bg-surface)',
+                      color: isSelected ? '#0d140f' : (isOutOfStock ? 'var(--text-muted)' : 'var(--text-primary)'),
+                      border: `1px solid ${isSelected ? 'var(--gold-primary)' : (isOutOfStock ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)')}`,
+                      opacity: isOutOfStock ? 0.45 : 1,
+                      display: 'inline-flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title={
+                      isOutOfStock
+                        ? `Size ${sz} is currently Sold Out`
+                        : (isLowStock ? `Hurry! Only ${sizeStock} left in Size ${sz}` : `Size ${sz} is In Stock`)
+                    }
+                  >
+                    <span style={{ textDecoration: isOutOfStock ? 'line-through' : 'none' }}>{sz}</span>
+                    {isLowStock && (
+                      <span style={{ fontSize: '9px', fontWeight: 800, color: isSelected ? '#7c2d12' : '#f59e0b', marginTop: '-2px', textDecoration: 'none' }}>
+                        {sizeStock} left
+                      </span>
+                    )}
+                    {isOutOfStock && (
+                      <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#ef4444', marginTop: '-2px' }}>
+                        Sold out
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Dynamic Live Stock Status for Selected Size */}
+            <div style={{ marginTop: '10px' }}>
+              {(() => {
+                const stock = product.stockBySize?.[selectedSize] !== undefined
+                  ? Number(product.stockBySize[selectedSize])
+                  : (product.inStock ? 10 : 0);
+
+                if (stock <= 0) {
+                  return (
+                    <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✕</span>
+                      <span>Size {selectedSize} is currently sold out. Please select an in-stock size above.</span>
+                    </span>
+                  );
+                }
+                if (stock <= 2) {
+                  return (
+                    <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span>⚡</span>
+                      <span>Hurry! Only {stock} left in Size {selectedSize}!</span>
+                    </span>
+                  );
+                }
+                return (
+                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#4ade80', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span>●</span>
+                    <span>In Stock</span>
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
-          {/* Quantity Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Quantity:
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'var(--bg-surface)', padding: '4px 12px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                style={{ background: 'none', border: 'none', color: 'var(--gold-primary)', fontSize: '16px', fontWeight: 800, cursor: 'pointer' }}
-              >
-                -
-              </button>
-              <span style={{ fontSize: '14px', fontWeight: 800, minWidth: '20px', textAlign: 'center' }}>
-                {quantity}
-              </span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                style={{ background: 'none', border: 'none', color: 'var(--gold-primary)', fontSize: '16px', fontWeight: 800, cursor: 'pointer' }}
-              >
-                +
-              </button>
-            </div>
-          </div>
+          {/* Quantity Selector with Stock Guards */}
+          {(() => {
+            const currentStock = product.stockBySize?.[selectedSize] !== undefined
+              ? Number(product.stockBySize[selectedSize])
+              : (product.inStock ? 10 : 0);
+            const itemInCart = items?.find(
+              (i) => i.id === product.id && i.size === selectedSize && (i.subCategory === product.subCategory || !i.subCategory)
+            );
+            const inCartQty = itemInCart ? itemInCart.quantity : 0;
+            const remainingStock = Math.max(0, currentStock - inCartQty);
+            const isOutOfStock = currentStock <= 0;
+            const isMaxInCart = currentStock > 0 && inCartQty >= currentStock;
+            const isAtStockLimit = quantity >= currentStock || (quantity + inCartQty >= currentStock);
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Quantity:
+                  </span>
+                  <div
+                    className={shakeWarning ? 'animate-shake' : ''}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      backgroundColor: 'var(--bg-surface)',
+                      padding: '4px 12px',
+                      borderRadius: '10px',
+                      border: `1px solid ${isAtStockLimit ? 'rgba(245, 158, 11, 0.45)' : 'var(--border-subtle)'}`,
+                      transition: 'border-color 0.2s ease'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={isOutOfStock || isMaxInCart || quantity <= 1}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: quantity <= 1 || isOutOfStock || isMaxInCart ? 'var(--text-muted)' : 'var(--gold-primary)',
+                        fontSize: '16px',
+                        fontWeight: 800,
+                        cursor: quantity <= 1 || isOutOfStock || isMaxInCart ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      -
+                    </button>
+                    <span style={{ fontSize: '14px', fontWeight: 800, minWidth: '20px', textAlign: 'center' }}>
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (quantity >= currentStock) {
+                          setShakeWarning(true);
+                          setTimeout(() => setShakeWarning(false), 400);
+                          showStockToast(`Limited Stock Alert: Only ${currentStock} available in Size ${selectedSize}. Maximum limit reached.`);
+                          return;
+                        }
+                        if (quantity + inCartQty >= currentStock) {
+                          setShakeWarning(true);
+                          setTimeout(() => setShakeWarning(false), 400);
+                          showStockToast(`Limited Stock Alert: You already have ${inCartQty} in cart. Total cannot exceed ${currentStock} units for Size ${selectedSize}.`);
+                          return;
+                        }
+                        setQuantity((q) => Math.min(currentStock, q + 1));
+                      }}
+                      disabled={isOutOfStock || isMaxInCart || isAtStockLimit}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: (isOutOfStock || isMaxInCart || isAtStockLimit) ? 'var(--text-muted)' : 'var(--gold-primary)',
+                        fontSize: '16px',
+                        fontWeight: 800,
+                        cursor: (isOutOfStock || isMaxInCart || isAtStockLimit) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Stock Limit Badge */}
+                  {isAtStockLimit && currentStock > 0 && (
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <AlertTriangle size={14} />
+                      <span>Max stock reached</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* In-Cart Count Context Alert */}
+                {inCartQty > 0 && currentStock > 0 && (
+                  <div style={{
+                    fontSize: '11.5px',
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    width: 'fit-content'
+                  }}>
+                    <span>🛍️</span>
+                    <span>You have <strong>{inCartQty}</strong> in your cart. {remainingStock > 0 ? `(Can add up to ${remainingStock} more)` : `(All ${currentStock} available units are in cart)`}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
-            <button
-              type="button"
-              onClick={() => addToCart(product, selectedSize, quantity)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '16px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--gold-primary)',
-                color: '#0d140f',
-                border: 'none',
-                fontSize: '15px',
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(200, 169, 106, 0.25)',
-                transition: 'all 0.15s'
-              }}
-            >
-              <ShoppingBag size={18} />
-              <span>Add To Cart</span>
-            </button>
+            {(() => {
+              const currentStock = product.stockBySize?.[selectedSize] !== undefined
+                ? Number(product.stockBySize[selectedSize])
+                : (product.inStock ? 10 : 0);
+              const itemInCart = items?.find(
+                (i) => i.id === product.id && i.size === selectedSize && (i.subCategory === product.subCategory || !i.subCategory)
+              );
+              const inCartQty = itemInCart ? itemInCart.quantity : 0;
+              const remainingStock = Math.max(0, currentStock - inCartQty);
+              const isSoldOut = currentStock <= 0;
+              const isMaxInCart = currentStock > 0 && inCartQty >= currentStock;
 
-            <a
-              href={directWhatsAppUrl}
-              onClick={(e) => triggerWhatsApp({ text: directWhatsAppText, e })}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '15px',
-                borderRadius: '12px',
-                backgroundColor: '#22c55e',
-                color: '#0d140f',
-                fontSize: '14px',
-                fontWeight: 800,
-                textDecoration: 'none',
-                boxShadow: '0 6px 20px rgba(34, 197, 94, 0.25)',
-                cursor: 'pointer'
-              }}
-            >
-              <MessageCircle size={18} />
-              <span>Buy Now with WhatsApp Direct</span>
-            </a>
+              return (
+                <>
+                  {/* Creative Notification Banner when all units are in cart */}
+                  {isMaxInCart && (
+                    <div
+                      className="animate-fade-in"
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        color: '#f59e0b',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                      }}
+                    >
+                      <Zap size={18} style={{ flexShrink: 0 }} />
+                      <span>
+                        <strong>Limited Stock Alert:</strong> All {currentStock} available units of Size {selectedSize} are already in your cart!
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={isSoldOut || isMaxInCart}
+                    onClick={() => {
+                      if (isMaxInCart) {
+                        showStockToast(`Limited Stock: All ${currentStock} units of Size ${selectedSize} are already in your cart!`);
+                        return;
+                      }
+                      addToCart(product, selectedSize, Math.min(quantity, remainingStock > 0 ? remainingStock : quantity));
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      backgroundColor: (isSoldOut || isMaxInCart) ? 'var(--bg-elevated)' : 'var(--gold-primary)',
+                      color: (isSoldOut || isMaxInCart) ? 'var(--text-muted)' : '#0d140f',
+                      border: (isSoldOut || isMaxInCart) ? '1px solid var(--border-subtle)' : 'none',
+                      fontSize: '15px',
+                      fontWeight: 800,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      cursor: (isSoldOut || isMaxInCart) ? 'not-allowed' : 'pointer',
+                      opacity: (isSoldOut || isMaxInCart) ? 0.65 : 1,
+                      boxShadow: (isSoldOut || isMaxInCart) ? 'none' : '0 6px 20px rgba(200, 169, 106, 0.25)',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    <ShoppingBag size={18} />
+                    <span>
+                      {isSoldOut
+                        ? `Size ${selectedSize} Out of Stock`
+                        : isMaxInCart
+                        ? `All Stock in Cart (${inCartQty}/${currentStock})`
+                        : 'Add To Cart'}
+                    </span>
+                  </button>
+
+                  <a
+                    href={isSoldOut ? undefined : directWhatsAppUrl}
+                    onClick={(e) => {
+                      if (isSoldOut) {
+                        e.preventDefault();
+                        triggerWhatsApp({ text: `Hello Crown & Cross, when will "${product.name}" in Size ${selectedSize} be back in stock?`, e });
+                      } else {
+                        triggerWhatsApp({ text: directWhatsAppText, e });
+                      }
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '15px',
+                      borderRadius: '12px',
+                      backgroundColor: isSoldOut ? 'var(--bg-elevated)' : '#22c55e',
+                      color: isSoldOut ? 'var(--text-primary)' : '#0d140f',
+                      border: isSoldOut ? '1px solid var(--border-subtle)' : 'none',
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      boxShadow: isSoldOut ? 'none' : '0 6px 20px rgba(34, 197, 94, 0.25)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <MessageCircle size={18} />
+                    <span>{isSoldOut ? `Ask for Restock on WhatsApp` : 'Buy Now with WhatsApp Direct'}</span>
+                  </a>
+
+                  {/* Mobile Only: 1-Tap UPI App Launcher (Android & iPhone) */}
+                  {!isSoldOut && (
+                    <a
+                      href={`upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement&am=${product.price * quantity}&tn=${encodeURIComponent(`Order ${(product.name || 'Jersey').slice(0, 20)}`)}&cu=INR`}
+                      className="mobile-only-pdp-upi-btn"
+                      title="Open installed UPI app (GPay, PhonePe, Paytm, CRED, BHIM)"
+                    >
+                      <Zap size={18} />
+                      <span>Pay ₹{product.price * quantity} with UPI App (GPay / PhonePe / Paytm)</span>
+                    </a>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* Product Description */}
@@ -516,11 +766,11 @@ export default function ProductDetailPage() {
 
       {/* Related Kits */}
       {relatedKits.length > 0 && (
-        <div style={{ marginTop: '80px', borderTop: '1px solid var(--border-subtle)', paddingTop: '40px' }}>
+        <div style={{ marginTop: '80px', borderTop: '1px solid var(--border-subtle)', paddingTop: '40px' }} className="pdp-related-section">
           <h3 className="serif-heading" style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '24px' }}>
             More {product.category} Kits
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+          <div className="related-products-grid">
             {relatedKits.map((k) => (
               <ProductCard key={k.id} product={k} />
             ))}

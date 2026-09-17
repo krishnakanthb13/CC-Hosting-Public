@@ -59,7 +59,7 @@ export default function Footer() {
             </div>
             <div className="trust-text">
               <div className="trust-title">Live WhatsApp Support</div>
-              <div className="trust-sub">Contact Us on WhatsApp</div>
+              <div className="trust-sub">Contact Us: Whatsapp</div>
             </div>
           </div>
         </div>
@@ -166,7 +166,8 @@ export default function Footer() {
                   className="footer-wa-link"
                   title="Contact Us on WhatsApp"
                 >
-                  💬 Contact Us
+                  <MessageCircle size={15} />
+                  <span>Contact Us: Whatsapp</span>
                 </a>
               </li>
               <li>
@@ -175,10 +176,10 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link footer-insta-link-item"
-                  title="Follow Crown & Cross on Instagram (@_crown_and_cross_)"
+                  title="Contact Us on Instagram (@_crown_and_cross_)"
                 >
-                  <Instagram size={14} className="footer-inline-icon" />
-                  <span>Instagram: @_crown_and_cross_</span>
+                  <Instagram size={15} className="footer-inline-icon" />
+                  <span>Contact Us: Instagram</span>
                 </a>
               </li>
               <li>

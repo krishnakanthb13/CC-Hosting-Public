@@ -271,7 +271,7 @@ export default function HomePage() {
 
       {/* Featured Kits Showcase */}
       {featuredKits.length > 0 && (
-        <section style={{ maxWidth: '1360px', margin: '60px auto 0', padding: '0 24px' }}>
+        <section className="featured-section" style={{ maxWidth: '1360px', margin: '60px auto 0', padding: '0 24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
@@ -286,13 +286,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-              gap: '24px'
-            }}
-          >
+          <div className="featured-products-grid">
             {featuredKits.slice(0, 3).map((kit) => (
               <ProductCard key={kit.id} product={kit} />
             ))}
@@ -306,7 +300,7 @@ export default function HomePage() {
       <div id="retro" style={{ position: 'relative', top: '-100px', visibility: 'hidden' }} />
 
       {/* Catalog & Collections Section */}
-      <section id="catalog" style={{ maxWidth: '1360px', margin: '80px auto 0', padding: '0 24px' }}>
+      <section id="catalog" className="catalog-section" style={{ maxWidth: '1360px', margin: '80px auto 0', padding: '0 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
             Complete Jersey Collection
@@ -477,13 +471,7 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
-              gap: '24px'
-            }}
-          >
+          <div className="catalog-products-grid">
             {filteredProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -498,6 +486,7 @@ export default function HomePage() {
           margin: '90px auto 0',
           padding: '0 24px'
         }}
+        className="quality-standards-section"
       >
         <div
           style={{
@@ -507,8 +496,9 @@ export default function HomePage() {
             padding: '48px 36px',
             boxShadow: 'var(--shadow-card)'
           }}
+          className="quality-standards-card"
         >
-          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px' }}>
+          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px' }} className="quality-standards-header">
             <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
               Craft &amp; Authenticity
             </span>
@@ -576,8 +566,8 @@ export default function HomePage() {
       </section>
 
       {/* Customer Lookbook & Social Proof */}
-      <section style={{ maxWidth: '1360px', margin: '90px auto 0', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+      <section style={{ maxWidth: '1360px', margin: '90px auto 0', padding: '0 24px' }} className="social-proof-section">
+        <div style={{ textAlign: 'center', marginBottom: '36px' }} className="social-proof-header">
           <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
             Chennai &amp; Pan-India Kit Community
           </span>

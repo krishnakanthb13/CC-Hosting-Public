@@ -13,7 +13,8 @@ import {
   ChevronDown,
   MessageCircle,
   QrCode,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 export default function CartDrawer() {
@@ -32,7 +33,8 @@ export default function CartDrawer() {
     freeShippingProgress,
     setActiveUpiOrder,
     customer,
-    setCustomer
+    setCustomer,
+    showStockToast
   } = useCart();
 
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -248,27 +250,58 @@ export default function CartDrawer() {
                       Size: <strong>{item.size}</strong> • {item.subCategory}
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-primary)', padding: '2px 8px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                        <button
-                          onClick={() => updateQuantity(item.key, -1)}
-                          style={{ background: 'none', border: 'none', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}
-                        >
-                          -
-                        </button>
-                        <span style={{ fontSize: '12px', fontWeight: 700 }}>{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.key, 1)}
-                          style={{ background: 'none', border: 'none', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}
-                        >
-                          +
-                        </button>
-                      </div>
+                    {(() => {
+                      const maxStock = item.stockBySize?.[item.size] !== undefined
+                        ? Number(item.stockBySize[item.size])
+                        : 99;
+                      const isMaxReached = item.quantity >= maxStock;
 
-                      <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px' }}>
-                        ₹{item.price * item.quantity}
-                      </div>
-                    </div>
+                      return (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-primary)', padding: '2px 8px', borderRadius: '8px', border: `1px solid ${isMaxReached ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'}` }}>
+                              <button
+                                onClick={() => updateQuantity(item.key, -1)}
+                                style={{ background: 'none', border: 'none', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}
+                              >
+                                -
+                              </button>
+                              <span style={{ fontSize: '12px', fontWeight: 700 }}>{item.quantity}</span>
+                              <button
+                                onClick={() => {
+                                  if (isMaxReached) {
+                                    showStockToast?.(`Limited Stock: Maximum available units (${maxStock}) reached for Size ${item.size}.`);
+                                    return;
+                                  }
+                                  updateQuantity(item.key, 1);
+                                }}
+                                disabled={isMaxReached}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: isMaxReached ? 'var(--text-muted)' : 'var(--gold-primary)',
+                                  cursor: isMaxReached ? 'not-allowed' : 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: 700
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px' }}>
+                              ₹{item.price * item.quantity}
+                            </div>
+                          </div>
+                          {isMaxReached && maxStock < 99 && (
+                            <div style={{ fontSize: '10.5px', color: '#f59e0b', fontWeight: 700, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>⚠️</span>
+                              <span>Max available stock reached ({maxStock} units)</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -430,6 +463,16 @@ export default function CartDrawer() {
               >
                 <QrCode size={18} /> Pay via UPI QR (Auto-Generated)
               </button>
+
+              {/* Option 3: ONLY FOR MOBILE VIEW - Direct Installed UPI App Launcher (Android & iPhone) */}
+              <a
+                href={`upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement&am=${grandTotal}&tn=${encodeURIComponent(`Order CC-${Date.now().toString().slice(-6)}`)}&mode=02&cu=INR`}
+                className="mobile-only-cart-upi-btn"
+                title="Pay with any installed UPI app on your phone (GPay, PhonePe, Paytm, CRED, BHIM)"
+              >
+                <Zap size={17} />
+                <span>Pay ₹{grandTotal} with Installed UPI App</span>
+              </a>
             </div>
           </div>
         )}
