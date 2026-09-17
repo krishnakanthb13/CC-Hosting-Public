@@ -480,84 +480,62 @@ export default function HomePage() {
       </section>
 
       {/* Quality Standards Section */}
-      <section
-        style={{
-          maxWidth: '1360px',
-          margin: '90px auto 0',
-          padding: '0 24px'
-        }}
-        className="quality-standards-section"
-      >
-        <div
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-active)',
-            borderRadius: '24px',
-            padding: '48px 36px',
-            boxShadow: 'var(--shadow-card)'
-          }}
-          className="quality-standards-card"
-        >
-          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px' }} className="quality-standards-header">
-            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
+      <section className="quality-standards-section">
+        <div className="quality-standards-card">
+          <div className="quality-standards-header">
+            <span className="quality-standards-badge">
               Craft &amp; Authenticity
             </span>
-            <h2 className="serif-heading" style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+            <h2 className="serif-heading quality-standards-title">
               The 5 Quality Standards
             </h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+            <p className="quality-standards-subtitle">
               We are kit collectors first. We strictly classify every jersey so you get precisely what you pay for.
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '20px'
-            }}
-          >
-            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '6px' }}>
+          <div className="quality-standards-grid">
+            <div className="quality-standard-box">
+              <div className="quality-standard-item-title">
                 1. Player Version
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p className="quality-standard-item-desc">
                 Athletic slim cut, heat-applied silicon crests, and micro-vented technical fabric as worn on the pitch.
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '6px' }}>
+            <div className="quality-standard-box">
+              <div className="quality-standard-item-title">
                 2. Master Copy
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p className="quality-standard-item-desc">
                 Exact 1:1 reproduction of iconic and rare kits with pristine details, tags, and stitch density.
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '6px' }}>
+            <div className="quality-standard-box">
+              <div className="quality-standard-item-title">
                 3. Fan Version Set
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p className="quality-standard-item-desc">
                 Relaxed everyday fit, fully embroidered badge, durable poly fabric built for weekly matchday wear.
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '6px' }}>
+            <div className="quality-standard-box">
+              <div className="quality-standard-item-title">
                 4. Embroidered
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p className="quality-standard-item-desc">
                 Classic stitched crests and sponsor patches for timeless longevity and tactile quality.
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '6px' }}>
+            <div className="quality-standard-box">
+              <div className="quality-standard-item-title">
                 5. Sublimation
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p className="quality-standard-item-desc">
                 High-definition heat-infused color dyes that will never fade, crack, or peel across countless washes.
               </p>
             </div>
@@ -566,48 +544,42 @@ export default function HomePage() {
       </section>
 
       {/* Customer Lookbook & Social Proof */}
-      <section style={{ maxWidth: '1360px', margin: '90px auto 0', padding: '0 24px' }} className="social-proof-section">
-        <div style={{ textAlign: 'center', marginBottom: '36px' }} className="social-proof-header">
-          <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-primary)' }}>
+      <section className="social-proof-section">
+        <div className="social-proof-header">
+          <span className="social-proof-badge">
             Chennai &amp; Pan-India Kit Community
           </span>
-          <h2 className="serif-heading" style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+          <h2 className="serif-heading social-proof-title">
             Worn By The Faithful
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+          <p className="social-proof-subtitle">
             Tag <strong>@crownandcross</strong> on Instagram to be featured on our social wall.
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '20px'
-          }}
-        >
-          <div style={{ backgroundColor: 'var(--bg-surface)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ color: 'var(--gold-primary)', marginBottom: '8px' }}>★★★★★</div>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', marginBottom: '14px' }}>
+        <div className="social-proof-grid">
+          <div className="social-proof-card">
+            <div className="social-proof-stars">★★★★★</div>
+            <p className="social-proof-text">
               "The 1986 Argentina Maradona kit is pure nostalgia. The material and collar are spot on. Delivered to Bangalore in 3 days!"
             </p>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>— Rohit S., Bengaluru</div>
+            <div className="social-proof-author">— Rohit S., Bengaluru</div>
           </div>
 
-          <div style={{ backgroundColor: 'var(--bg-surface)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ color: 'var(--gold-primary)', marginBottom: '8px' }}>★★★★★</div>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', marginBottom: '14px' }}>
+          <div className="social-proof-card">
+            <div className="social-proof-stars">★★★★★</div>
+            <p className="social-proof-text">
               "Ordered via WhatsApp and paid with UPI QR code. Jason verified the payment within minutes and shared the tracking number. Legit service."
             </p>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>— Ashwin K., Chennai</div>
+            <div className="social-proof-author">— Ashwin K., Chennai</div>
           </div>
 
-          <div style={{ backgroundColor: 'var(--bg-surface)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ color: 'var(--gold-primary)', marginBottom: '8px' }}>★★★★★</div>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', marginBottom: '14px' }}>
+          <div className="social-proof-card">
+            <div className="social-proof-stars">★★★★★</div>
+            <p className="social-proof-text">
               "Real Madrid Player Version fits like a glove. Heat-sealed badge is top tier. Easily the best football jersey store in South India."
             </p>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>— Vignesh M., Coimbatore</div>
+            <div className="social-proof-author">— Vignesh M., Coimbatore</div>
           </div>
         </div>
       </section>

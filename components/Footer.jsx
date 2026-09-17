@@ -23,45 +23,51 @@ export default function Footer() {
       <div className="footer-container">
         {/* Top Trust Guarantees Bar */}
         <div className="trust-bar">
-          <div className="trust-item">
+          <Link href="/shipping-policy" className="trust-item trust-item-link">
             <div className="trust-icon-box">
-              <Truck size={22} />
+              <Truck size={20} />
             </div>
             <div className="trust-text">
               <div className="trust-title">Free Pan-India Delivery</div>
               <div className="trust-sub">On orders ₹1,499 and above</div>
             </div>
-          </div>
+          </Link>
 
-          <div className="trust-item">
+          <Link href="/#catalog" className="trust-item trust-item-link" onClick={() => handleHashNav('#catalog')}>
             <div className="trust-icon-box">
-              <ShieldCheck size={22} />
+              <ShieldCheck size={20} />
             </div>
             <div className="trust-text">
               <div className="trust-title">Match-Grade Kits</div>
               <div className="trust-sub">Player versions &amp; master copies</div>
             </div>
-          </div>
+          </Link>
 
-          <div className="trust-item">
+          <Link href="/returns-policy" className="trust-item trust-item-link">
             <div className="trust-icon-box">
-              <RefreshCw size={20} />
+              <RefreshCw size={19} />
             </div>
             <div className="trust-text">
               <div className="trust-title">7-Day Sizing Exchange</div>
               <div className="trust-sub">Hassle-free size replacements</div>
             </div>
-          </div>
+          </Link>
 
-          <div className="trust-item">
+          <a
+            href={getWhatsAppUrl("Hello Crown & Cross, I have a query regarding jerseys and orders.")}
+            onClick={(e) => triggerWhatsApp({ text: 'Hello Crown & Cross, I have a query regarding jerseys and orders.', e })}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="trust-item trust-item-link trust-item-wa"
+          >
             <div className="trust-icon-box wa-icon-box">
-              <MessageCircle size={22} />
+              <MessageCircle size={20} />
             </div>
             <div className="trust-text">
               <div className="trust-title">Live WhatsApp Support</div>
               <div className="trust-sub">Contact Us: Whatsapp</div>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* 4 Main Footer Navigation Columns */}

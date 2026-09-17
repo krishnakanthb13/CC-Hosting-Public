@@ -6,6 +6,9 @@ import CartDrawer from '../components/CartDrawer';
 import LayoutClientWrapper from '../components/LayoutClientWrapper';
 
 export const metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://crownandcross.vercel.app'
+  ),
   title: 'Crown & Cross — Football Jerseys | Club • Country • Retro',
   description: 'Some wear fashion. We wear football. Premium football jerseys in Chennai, Tamil Nadu. Player version, master copy, fan sets, and retro classics with Pan-India delivery.',
   openGraph: {
