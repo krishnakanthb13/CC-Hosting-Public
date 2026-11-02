@@ -4,6 +4,14 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import ProductCard from '../components/ProductCard';
 import {
+  useStoreConfig,
+  getCategoryNames,
+  getSubCategoryNames,
+  getShipping,
+  getExchange,
+  numOr
+} from '../lib/storeConfig';
+import {
   Sparkles,
   ArrowDown,
   Zap,
@@ -15,33 +23,25 @@ import {
   RotateCcw
 } from 'lucide-react';
 
-const CATEGORIES = ['All', 'Club', 'Country', 'Retro'];
-const SUB_CATEGORIES = [
-  'All',
-  'Player Version',
-  'Master Copy',
-  'Fan Version Set',
-  'Embroidered',
-  'Sublimation'
-];
-
 export default function HomePage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Catalog + brand settings come from products.json (admin-editable) via the
+  // shared, module-cached config fetch. Fallbacks keep the page renderable
+  // while loading or if the fetch fails.
+  const { config, loaded } = useStoreConfig();
+  const products = (config && config.products) || [];
+  const categoryOptions = ['All', ...getCategoryNames(config)];
+  const subCategoryOptions = ['All', ...getSubCategoryNames(config)];
+  const shippingCfg = getShipping(config);
+  const exchangeCfg = getExchange(config);
+  const freeShippingThreshold = numOr(shippingCfg.freeShippingThreshold, 1499);
+  const metroDeliveryDays = shippingCfg.metroDeliveryDays || '3-5 Business Days';
+  const windowDays = exchangeCfg.windowDays || '5-7 Days';
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeSubCategory, setActiveSubCategory] = useState('All');
   const [search, setSearch] = useState('');
 
-  // Fetch catalog from public JSON
-  useEffect(() => {
-    fetch('/data/products.json')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.products) setProducts(data.products);
-      })
-      .catch((err) => console.error('Error reading products.json:', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const loading = !loaded;
 
   // Sync category with URL hash (e.g. #club, #country, #retro, #catalog)
   useEffect(() => {
@@ -92,19 +92,13 @@ export default function HomePage() {
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchCat =
-        activeCategory === 'All' ||
-        (activeCategory === 'Club' && p.category === 'Club') ||
-        (activeCategory === 'Country' && p.category === 'Country') ||
-        (activeCategory === 'Retro' && p.category === 'Retro');
+      const matchCat = activeCategory === 'All' || p.category === activeCategory;
 
       const matchSub =
         activeSubCategory === 'All' || p.subCategory === activeSubCategory;
 
-      const matchSearch =
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.team?.toLowerCase().includes(search.toLowerCase()) ||
-        p.season?.toLowerCase().includes(search.toLowerCase());
+      const haystack = `${String(p.name ?? '')} ${String(p.team ?? '')} ${String(p.season ?? '')}`.toLowerCase();
+      const matchSearch = haystack.includes(search.toLowerCase());
 
       return matchCat && matchSub && matchSearch;
     });
@@ -240,14 +234,14 @@ export default function HomePage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '18px', color: 'var(--gold-primary)', fontWeight: 800 }}>
                 <Zap size={18} />
-                <span>3–5 Days</span>
+                <span>{metroDeliveryDays}</span>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Metro Delivery Turnaround</div>
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '18px', color: 'var(--gold-primary)', fontWeight: 800 }}>
                 <ShieldCheck size={18} />
-                <span>5–7 Days</span>
+                <span>{windowDays}</span>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Sizing Exchange Window</div>
             </div>
@@ -256,7 +250,7 @@ export default function HomePage() {
                 <Truck size={18} />
                 <span>Free Delivery</span>
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>On all orders above ₹1,499</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>On all orders above ₹{freeShippingThreshold.toLocaleString('en-IN')}</div>
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '18px', color: 'var(--gold-primary)', fontWeight: 800 }}>
@@ -330,7 +324,7 @@ export default function HomePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             {/* Primary Category Tabs */}
             <div style={{ display: 'flex', gap: '6px', background: 'var(--bg-primary)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-subtle)', flexWrap: 'wrap', maxWidth: '100%' }}>
-              {CATEGORIES.map((cat) => (
+              {categoryOptions.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
@@ -407,7 +401,7 @@ export default function HomePage() {
             <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginRight: '6px' }}>
               Quality Tier:
             </span>
-            {SUB_CATEGORIES.map((sub) => (
+            {subCategoryOptions.map((sub) => (
               <button
                 key={sub}
                 onClick={() => setActiveSubCategory(sub)}

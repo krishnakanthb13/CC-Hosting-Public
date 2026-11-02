@@ -4,30 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, X, ArrowRight, Sparkles, Tag, CheckCircle2 } from 'lucide-react';
+import { useStoreConfig } from '../lib/storeConfig';
 
 export default function SearchModal({ isOpen, onClose }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const inputRef = useRef(null);
 
-  // Load product catalog once
-  useEffect(() => {
-    if (isOpen && products.length === 0) {
-      setLoading(true);
-      fetch('/data/products.json')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.products) {
-            setProducts(data.products);
-          }
-        })
-        .catch((err) => console.error('Failed to load products for search:', err))
-        .finally(() => setLoading(false));
-    }
-  }, [isOpen, products.length]);
+  // Catalog comes from the shared, module-cached config fetch (one request
+  // across the whole app). Falls back to an empty list while loading.
+  const { config, loaded } = useStoreConfig();
+  const products = (config && config.products) || [];
 
   // Autofocus input when modal opens
   useEffect(() => {
@@ -62,21 +50,15 @@ export default function SearchModal({ isOpen, onClose }) {
 
   const filteredProducts = products.filter((p) => {
     // Category filter
-    if (activeCategory !== 'All' && p.category?.toLowerCase() !== activeCategory.toLowerCase()) {
+    if (activeCategory !== 'All' && String(p.category ?? '').toLowerCase() !== activeCategory.toLowerCase()) {
       return false;
     }
 
     // Text search matching product name, team, season, subCategory, description
     if (!trimmedQuery) return true;
 
-    return (
-      p.name?.toLowerCase().includes(trimmedQuery) ||
-      p.team?.toLowerCase().includes(trimmedQuery) ||
-      p.season?.toLowerCase().includes(trimmedQuery) ||
-      p.category?.toLowerCase().includes(trimmedQuery) ||
-      p.subCategory?.toLowerCase().includes(trimmedQuery) ||
-      p.description?.toLowerCase().includes(trimmedQuery)
-    );
+    const haystack = `${String(p.name ?? '')} ${String(p.team ?? '')} ${String(p.season ?? '')} ${String(p.category ?? '')} ${String(p.subCategory ?? '')} ${String(p.description ?? '')}`.toLowerCase();
+    return haystack.includes(trimmedQuery);
   });
 
   const handleSelectProduct = (product) => {
@@ -166,7 +148,7 @@ export default function SearchModal({ isOpen, onClose }) {
 
         {/* Search Results Area */}
         <div className="search-modal-results">
-          {loading ? (
+          {!loaded ? (
             <div className="search-modal-loading">
               <span>Loading available kits...</span>
             </div>

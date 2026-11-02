@@ -1,4 +1,7 @@
 import { getWhatsAppUrl } from '../../lib/whatsapp';
+import { getBrandConfig } from '../../lib/products';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Shipping & Delivery Policy — Crown & Cross',
@@ -6,6 +9,16 @@ export const metadata = {
 };
 
 export default function ShippingPolicyPage() {
+  // Rates, timelines and contact channels are admin-editable in products.json
+  const brand = getBrandConfig();
+  const shipping = brand.shipping || {};
+  const standardFee = shipping.standardFee ?? 80;
+  const freeShippingThreshold = shipping.freeShippingThreshold ?? 1499;
+  const metroDays = shipping.metroDeliveryDays || '3-5 Business Days';
+  const restOfIndiaDays = shipping.restOfIndiaDeliveryDays || '5-8 Business Days';
+  const phone = brand.phone || '+917695924602';
+  const email = brand.email || 'crownandcross29@gmail.com';
+
   return (
     <div style={{ maxWidth: '840px', margin: '60px auto 100px', padding: '0 24px' }}>
       <h1 className="serif-heading" style={{ fontSize: '36px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '12px' }}>
@@ -25,8 +38,8 @@ export default function ShippingPolicyPage() {
           </p>
           <div style={{ marginTop: '14px', padding: '16px', backgroundColor: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
             <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <li><strong>Standard Flat Rate:</strong> ₹80 on orders under ₹1,499.</li>
-              <li><strong>Free Shipping:</strong> Automatically applied to all orders of <strong>₹1,499 and above</strong>.</li>
+              <li><strong>Standard Flat Rate:</strong> ₹{standardFee} on orders under ₹{freeShippingThreshold.toLocaleString('en-IN')}.</li>
+              <li><strong>Free Shipping:</strong> Automatically applied to all orders of <strong>₹{freeShippingThreshold.toLocaleString('en-IN')} and above</strong>.</li>
             </ul>
           </div>
         </div>
@@ -39,8 +52,8 @@ export default function ShippingPolicyPage() {
             Orders are processed and packed within 24–48 hours of payment confirmation (UPI verification). Estimated delivery timeframes:
           </p>
           <ul style={{ paddingLeft: '20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <li><strong>Metro Cities (Chennai, Bengaluru, Mumbai, Delhi-NCR, Hyderabad, Kolkata):</strong> 3–5 Business Days.</li>
-            <li><strong>Rest of India (Tier 2/3 Cities &amp; Towns):</strong> 5–8 Business Days.</li>
+            <li><strong>Metro Cities (Chennai, Bengaluru, Mumbai, Delhi-NCR, Hyderabad, Kolkata):</strong> {metroDays}.</li>
+            <li><strong>Rest of India (Tier 2/3 Cities &amp; Towns):</strong> {restOfIndiaDays}.</li>
           </ul>
         </div>
 
@@ -51,19 +64,19 @@ export default function ShippingPolicyPage() {
           <p>
             Once your payment screenshot is verified on WhatsApp (
             <a
-              href={getWhatsAppUrl("Hello Crown & Cross, attaching my payment verification")}
+              href={getWhatsAppUrl("Hello Crown & Cross, attaching my payment verification", phone)}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#4ade80', fontWeight: 700, textDecoration: 'underline' }}
             >
-              +91 76959 24602
+              {phone}
             </a>
             ) or email (
             <a
-              href="mailto:crownandcross29@gmail.com?subject=Payment%20Verification"
+              href={`mailto:${email}?subject=Payment%20Verification`}
               style={{ color: 'var(--gold-primary)', fontWeight: 700, textDecoration: 'underline' }}
             >
-              crownandcross29@gmail.com
+              {email}
             </a>
             ), you will receive:
           </p>
@@ -80,12 +93,12 @@ export default function ShippingPolicyPage() {
           <p>
             If the package arrives visibly damaged or tampered with, please record an unboxing video and immediately notify our WhatsApp support at{' '}
             <a
-              href={getWhatsAppUrl("Hello Crown & Cross, reporting damaged parcel")}
+              href={getWhatsAppUrl("Hello Crown & Cross, reporting damaged parcel", phone)}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#4ade80', fontWeight: 700, textDecoration: 'underline' }}
             >
-              +91 76959 24602
+              {phone}
             </a>{' '}
             within 24 hours of delivery so we can issue an instant replacement.
           </p>

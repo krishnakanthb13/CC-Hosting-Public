@@ -1,9 +1,18 @@
+import { getBrandConfig } from '../../lib/products';
+
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Terms of Service — Crown & Cross',
   description: 'Terms of service and customer conditions for Crown & Cross.'
 };
 
 export default function TermsPage() {
+  // Payee identity is admin-editable in products.json
+  const brand = getBrandConfig();
+  const upiId = brand.upiId || 'jasonclement.jm-1@okhdfcbank';
+  const payeeName = brand.payeeName || 'Jason Clement';
+
   return (
     <div style={{ maxWidth: '840px', margin: '60px auto 100px', padding: '0 24px' }}>
       <h1 className="serif-heading" style={{ fontSize: '36px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '12px' }}>
@@ -37,13 +46,13 @@ export default function TermsPage() {
             3. Pricing &amp; UPI Payments
           </h2>
           <p>
-            All prices are listed in Indian Rupees (₹ INR). Payments are collected via direct UPI URI/QR code to payee <strong>Jason Clement</strong> (
+            All prices are listed in Indian Rupees (₹ INR). Payments are collected via direct UPI URI/QR code to payee <strong>{payeeName}</strong> (
             <a
-              href="upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement"
+              href={`upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}`}
               style={{ color: 'var(--gold-primary)', fontWeight: 600, textDecoration: 'underline' }}
               title="Click to open in UPI app"
             >
-              <code>jasonclement.jm-1@okhdfcbank</code>
+              <code>{upiId}</code>
             </a>
             ). Orders are officially queued for dispatch upon verification of the customer's payment transaction screenshot.
           </p>

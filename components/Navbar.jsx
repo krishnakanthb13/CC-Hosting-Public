@@ -5,12 +5,22 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, MessageCircle, Menu, X, Sparkles, Instagram, Search } from 'lucide-react';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
+import { useStoreConfig, getShipping, getExchange, getPhone, numOr } from '../lib/storeConfig';
 import SearchModal from './SearchModal';
 
 export default function Navbar() {
   const { totalItems, setIsCartOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Announcement bar + WhatsApp deep-links derive from products.json brand config
+  const { config } = useStoreConfig();
+  const shippingCfg = getShipping(config);
+  const exchangeCfg = getExchange(config);
+  const waPhone = getPhone(config);
+  const freeShippingThreshold = numOr(shippingCfg.freeShippingThreshold, 1499);
+  const windowDays = exchangeCfg.windowDays || '5-7 Days';
+  const inquiryText = 'Hello Crown & Cross, I have an inquiry regarding jerseys';
 
   // Keyboard shortcut (Cmd/Ctrl + K) to open search
   useEffect(() => {
@@ -52,22 +62,22 @@ export default function Navbar() {
           aria-label="Store Announcements"
         >
           <div className="announcement-track">
-            <span className="announcement-item">⚡ FREE SHIPPING ON ORDERS ABOVE ₹1,499</span>
+            <span className="announcement-item">⚡ FREE SHIPPING ON ORDERS ABOVE ₹{freeShippingThreshold.toLocaleString('en-IN')}</span>
             <span className="announcement-divider">•</span>
             <span className="announcement-item">PAN-INDIA DELIVERY</span>
             <span className="announcement-divider">•</span>
-            <span className="announcement-item">5–7 DAYS SIZING EXCHANGE</span>
+            <span className="announcement-item">{String(windowDays).toUpperCase()} SIZING EXCHANGE</span>
             <span className="announcement-divider">•</span>
             <span className="announcement-item">PLAYER EDITIONS &amp; MASTER COPIES</span>
             <span className="announcement-divider">•</span>
           </div>
           {/* Seamless duplicate track for infinite horizontal loop on narrow screens */}
           <div className="announcement-track announcement-clone" aria-hidden="true">
-            <span className="announcement-item">⚡ FREE SHIPPING ON ORDERS ABOVE ₹1,499</span>
+            <span className="announcement-item">⚡ FREE SHIPPING ON ORDERS ABOVE ₹{freeShippingThreshold.toLocaleString('en-IN')}</span>
             <span className="announcement-divider">•</span>
             <span className="announcement-item">PAN-INDIA DELIVERY</span>
             <span className="announcement-divider">•</span>
-            <span className="announcement-item">5–7 DAYS SIZING EXCHANGE</span>
+            <span className="announcement-item">{String(windowDays).toUpperCase()} SIZING EXCHANGE</span>
             <span className="announcement-divider">•</span>
             <span className="announcement-item">PLAYER EDITIONS &amp; MASTER COPIES</span>
             <span className="announcement-divider">•</span>
@@ -145,8 +155,8 @@ export default function Navbar() {
 
             {/* WhatsApp Direct Chat */}
             <a
-              href={getWhatsAppUrl("Hello Crown & Cross, I have an inquiry regarding jerseys")}
-              onClick={(e) => triggerWhatsApp({ text: "Hello Crown & Cross, I have an inquiry regarding jerseys", e })}
+              href={getWhatsAppUrl(inquiryText, waPhone)}
+              onClick={(e) => triggerWhatsApp({ text: inquiryText, phone: waPhone, e })}
               target="_blank"
               rel="noopener noreferrer"
               className="nav-wa-btn"
@@ -234,10 +244,10 @@ export default function Navbar() {
 
             {/* Mobile WhatsApp Action */}
             <a
-              href={getWhatsAppUrl("Hello Crown & Cross, I have an inquiry regarding jerseys")}
+              href={getWhatsAppUrl(inquiryText, waPhone)}
               onClick={(e) => {
                 setMobileMenuOpen(false);
-                triggerWhatsApp({ text: "Hello Crown & Cross, I have an inquiry regarding jerseys", e });
+                triggerWhatsApp({ text: inquiryText, phone: waPhone, e });
               }}
               target="_blank"
               rel="noopener noreferrer"

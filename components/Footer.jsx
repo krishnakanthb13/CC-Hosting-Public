@@ -3,8 +3,26 @@
 import Link from 'next/link';
 import { Sparkles, Truck, ShieldCheck, RefreshCw, MessageCircle, ArrowUp, Instagram } from 'lucide-react';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
+import { useStoreConfig, getShipping, getExchange, getBrand, getUpiConfig, getPhone, numOr } from '../lib/storeConfig';
 
 export default function Footer() {
+  // Trust bar, delivery estimates, payee identity and contact channels all
+  // derive from products.json brand config (admin-editable) with fallbacks.
+  const { config } = useStoreConfig();
+  const brand = getBrand(config);
+  const shippingCfg = getShipping(config);
+  const exchangeCfg = getExchange(config);
+  const upiCfg = getUpiConfig(config);
+  const waPhone = getPhone(config);
+  const freeShippingThreshold = numOr(shippingCfg.freeShippingThreshold, 1499);
+  const standardFee = numOr(shippingCfg.standardFee, 80);
+  const metroDays = shippingCfg.metroDeliveryDays || '3-5 Business Days';
+  const restOfIndiaDays = shippingCfg.restOfIndiaDeliveryDays || '5-8 Business Days';
+  const windowDays = exchangeCfg.windowDays || '5-7 Days';
+  const email = brand.email || 'crownandcross29@gmail.com';
+  const location = brand.location || 'Chennai, Tamil Nadu';
+  const inquiryText = 'Hello Crown & Cross, I have a query regarding jerseys and orders.';
+
   const handleHashNav = (hash) => {
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
       window.location.hash = hash;
@@ -29,7 +47,7 @@ export default function Footer() {
             </div>
             <div className="trust-text">
               <div className="trust-title">Free Pan-India Delivery</div>
-              <div className="trust-sub">On orders ₹1,499 and above</div>
+              <div className="trust-sub">On orders ₹{freeShippingThreshold.toLocaleString('en-IN')} and above</div>
             </div>
           </Link>
 
@@ -48,14 +66,14 @@ export default function Footer() {
               <RefreshCw size={19} />
             </div>
             <div className="trust-text">
-              <div className="trust-title">7-Day Sizing Exchange</div>
-              <div className="trust-sub">Hassle-free size replacements</div>
+              <div className="trust-title">Sizing Exchange</div>
+              <div className="trust-sub">{windowDays} window • hassle-free size replacements</div>
             </div>
           </Link>
 
           <a
-            href={getWhatsAppUrl("Hello Crown & Cross, I have a query regarding jerseys and orders.")}
-            onClick={(e) => triggerWhatsApp({ text: 'Hello Crown & Cross, I have a query regarding jerseys and orders.', e })}
+            href={getWhatsAppUrl(inquiryText, waPhone)}
+            onClick={(e) => triggerWhatsApp({ text: inquiryText, phone: waPhone, e })}
             target="_blank"
             rel="noopener noreferrer"
             className="trust-item trust-item-link trust-item-wa"
@@ -88,7 +106,7 @@ export default function Footer() {
               "Some wear fashion. We wear football." Crafted for kit connoisseurs across India. Premium player versions, master copies, and immortal retros.
             </p>
             <div className="brand-location">
-              📍 Based in <strong>Chennai, Tamil Nadu</strong>
+                📍 Based in <strong>{location}</strong>
             </div>
             <div className="brand-story-link">
               <Link
@@ -190,7 +208,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:crownandcross29@gmail.com"
+                  href={`mailto:${email}`}
                   className="footer-link"
                   title="Email Us"
                 >
@@ -207,8 +225,8 @@ export default function Footer() {
                   <span className="delivery-arrow">→</span>
                 </Link>
                 <ul className="delivery-subpoints">
-                  <li>• <strong>Metro:</strong> 3–5 Days</li>
-                  <li>• <strong>Rest of India:</strong> 5–8 Days</li>
+                  <li>• <strong>Metro:</strong> {metroDays}</li>
+                  <li>• <strong>Rest of India:</strong> {restOfIndiaDays}</li>
                 </ul>
               </li>
             </ul>
@@ -220,12 +238,12 @@ export default function Footer() {
             <ul className="footer-link-list">
               <li>
                 <Link href="/shipping-policy" className="footer-link">
-                  Shipping &amp; Delivery Policy (₹80 / Free &gt; ₹1499)
+                  Shipping &amp; Delivery Policy (₹{standardFee} / Free &gt; ₹{freeShippingThreshold.toLocaleString('en-IN')})
                 </Link>
               </li>
               <li>
                 <Link href="/returns-policy" className="footer-link">
-                  Returns &amp; Sizing Exchange (5–7 Days)
+                  Returns &amp; Sizing Exchange ({windowDays})
                 </Link>
               </li>
               <li>
@@ -249,7 +267,7 @@ export default function Footer() {
               🔒 Verified UPI Payment Modes
             </span>
             <span className="payments-sub">
-              100% Secure Prepaid Orders • Payee: <strong>Jason Clement</strong> (<code>jasonclement.jm-1@okhdfcbank</code>)
+              100% Secure Prepaid Orders • Payee: <strong>{upiCfg.payeeName}</strong> (<code>{upiCfg.upiId}</code>)
             </span>
           </div>
 

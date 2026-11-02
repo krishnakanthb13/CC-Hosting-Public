@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { X, Check, Copy, MessageCircle, QrCode, Zap } from 'lucide-react';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
+import { useStoreConfig, getUpiConfig, getPhone } from '../lib/storeConfig';
 
 export default function UpiModal({ orderDetails, onClose }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -17,8 +18,10 @@ export default function UpiModal({ orderDetails, onClose }) {
     customer = {}
   } = orderDetails || {};
 
-  const upiId = 'jasonclement.jm-1@okhdfcbank';
-  const payeeName = 'Jason Clement';
+  // Payee identity comes from products.json brand config (admin-editable)
+  const { config } = useStoreConfig();
+  const { upiId, payeeName } = getUpiConfig(config);
+  const waPhone = getPhone(config);
   const note = `Order ${orderId}`;
   const refId = String(orderId).replace(/[^a-zA-Z0-9]/g, '');
 
@@ -58,7 +61,7 @@ export default function UpiModal({ orderDetails, onClose }) {
     customer.phone || 'N/A'
   }\nAddress: ${customer.address || 'N/A'}, ${customer.city || ''} ${customer.pincode || ''}\n\nAttaching payment screenshot here!`;
 
-  const waScreenshotUrl = getWhatsAppUrl(shareScreenshotText);
+  const waScreenshotUrl = getWhatsAppUrl(shareScreenshotText, waPhone);
 
   return (
     <div
@@ -201,7 +204,7 @@ export default function UpiModal({ orderDetails, onClose }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Verified Payee</span>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Jason Clement</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{payeeName}</span>
           </div>
         </div>
 
@@ -251,13 +254,13 @@ export default function UpiModal({ orderDetails, onClose }) {
             lineHeight: 1.5
           }}
         >
-          <strong>Next step to confirm dispatch:</strong> After paying, click below to send your payment screenshot to our official WhatsApp (<strong>+91 76959 24602</strong>).
+          <strong>Next step to confirm dispatch:</strong> After paying, click below to send your payment screenshot to our official WhatsApp (<strong>{waPhone}</strong>).
         </div>
 
         {/* Action button */}
         <a
           href={waScreenshotUrl}
-          onClick={(e) => triggerWhatsApp({ text: shareScreenshotText, e })}
+          onClick={(e) => triggerWhatsApp({ text: shareScreenshotText, phone: waPhone, e })}
           target="_blank"
           rel="noopener noreferrer"
           style={{

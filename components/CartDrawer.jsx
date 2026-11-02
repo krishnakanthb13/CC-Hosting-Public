@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { getWhatsAppUrl, triggerWhatsApp } from '../lib/whatsapp';
+import { useStoreConfig, getUpiConfig, getPhone } from '../lib/storeConfig';
 import {
   ShoppingBag,
   X,
@@ -39,6 +40,11 @@ export default function CartDrawer() {
 
   const [showAddressForm, setShowAddressForm] = useState(false);
 
+  // UPI payee + WhatsApp phone derive from products.json brand config
+  const { config } = useStoreConfig();
+  const { upiId, payeeName } = getUpiConfig(config);
+  const waPhone = getPhone(config);
+
   if (!isCartOpen) return null;
 
   const createUniqueOrderId = () => {
@@ -54,7 +60,7 @@ export default function CartDrawer() {
     text += `-------------------------------------\n`;
     items.forEach((item, index) => {
       text += `${index + 1}. *${item.name}*\n`;
-      text += `   - Quality: ${item.subCategory}\n`;
+      text += `   - Quality: ${item.subCategory || 'Standard'}\n`;
       text += `   - Size: ${item.size} | Qty: ${item.quantity}\n`;
       text += `   - Price: ₹${item.price * item.quantity}\n\n`;
     });
@@ -418,8 +424,8 @@ export default function CartDrawer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {/* Option 1: WhatsApp Checkout */}
               <a
-                href={getWhatsAppUrl(buildWhatsAppText())}
-                onClick={(e) => triggerWhatsApp({ text: buildWhatsAppText(), e })}
+                href={getWhatsAppUrl(buildWhatsAppText(), waPhone)}
+                onClick={(e) => triggerWhatsApp({ text: buildWhatsAppText(), phone: waPhone, e })}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -466,7 +472,7 @@ export default function CartDrawer() {
 
               {/* Option 3: ONLY FOR MOBILE VIEW - Direct Installed UPI App Launcher (Android & iPhone) */}
               <a
-                href={`upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement&am=${grandTotal}&tn=${encodeURIComponent(`Order CC-${Date.now().toString().slice(-6)}`)}&mode=02&cu=INR`}
+                href={`upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&tn=${encodeURIComponent(`Order CC-${Date.now().toString().slice(-6)}`)}&mode=02&cu=INR`}
                 className="mobile-only-cart-upi-btn"
                 title="Pay with any installed UPI app on your phone (GPay, PhonePe, Paytm, CRED, BHIM)"
               >

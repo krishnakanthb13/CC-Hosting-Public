@@ -1,11 +1,21 @@
 import { getWhatsAppUrl } from '../../lib/whatsapp';
+import { getBrandConfig } from '../../lib/products';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Returns & Exchange Policy — Crown & Cross',
-  description: '5-7 day sizing exchange terms, return eligibility, and refund guidelines.'
+  description: 'Sizing exchange terms, return eligibility, and refund guidelines.'
 };
 
 export default function ReturnsPolicyPage() {
+  // Exchange window and contact channels are admin-editable in products.json
+  const brand = getBrandConfig();
+  const exchange = brand.exchange || {};
+  const windowDays = exchange.windowDays || '5-7 Days';
+  const phone = brand.phone || '+917695924602';
+  const email = brand.email || 'crownandcross29@gmail.com';
+
   return (
     <div style={{ maxWidth: '840px', margin: '60px auto 100px', padding: '0 24px' }}>
       <h1 className="serif-heading" style={{ fontSize: '36px', fontWeight: 800, color: 'var(--gold-primary)', marginBottom: '12px' }}>
@@ -18,10 +28,10 @@ export default function ReturnsPolicyPage() {
       <div style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '20px', padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: '28px', fontSize: '14px', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px' }}>
-            1. Sizing Exchange Window (5–7 Days)
+            1. Sizing Exchange Window ({windowDays})
           </h2>
           <p>
-            We want you to wear your club with pride and comfort. If your jersey does not fit as expected, we provide a <strong>5–7 day sizing exchange window</strong> starting from the recorded delivery date.
+            We want you to wear your club with pride and comfort. If your jersey does not fit as expected, we provide a <strong>{windowDays.toLowerCase()} sizing exchange window</strong> starting from the recorded delivery date.
           </p>
         </div>
 
@@ -45,19 +55,19 @@ export default function ReturnsPolicyPage() {
             <li>
               Send a message to our WhatsApp support at{' '}
               <a
-                href={getWhatsAppUrl("Hello Crown & Cross, I would like to initiate a sizing exchange")}
+                href={getWhatsAppUrl("Hello Crown & Cross, I would like to initiate a sizing exchange", phone)}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#4ade80', fontWeight: 700, textDecoration: 'underline' }}
               >
-                +91 76959 24602
+                {phone}
               </a>{' '}
               or email{' '}
               <a
-                href="mailto:crownandcross29@gmail.com?subject=Sizing%20Exchange%20Request"
+                href={`mailto:${email}?subject=Sizing%20Exchange%20Request`}
                 style={{ color: 'var(--gold-primary)', fontWeight: 700, textDecoration: 'underline' }}
               >
-                crownandcross29@gmail.com
+                {email}
               </a>{' '}
               with your Order ID and photos showing the tags intact.
             </li>

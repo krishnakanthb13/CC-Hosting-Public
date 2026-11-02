@@ -7,6 +7,7 @@ import JerseyCarousel from '../../../components/JerseyCarousel';
 import ProductCard from '../../../components/ProductCard';
 import { useCart } from '../../../context/CartContext';
 import { getWhatsAppUrl, triggerWhatsApp } from '../../../lib/whatsapp';
+import { useStoreConfig, getShipping, getPhone, getUpiConfig, numOr } from '../../../lib/storeConfig';
 import {
   Award,
   Truck,
@@ -32,6 +33,15 @@ export default function ProductDetailPage() {
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [shakeWarning, setShakeWarning] = useState(false);
 
+  // Brand / shipping / UPI settings come from products.json (admin-editable)
+  const { config: storeConfig } = useStoreConfig();
+  const shippingCfg = getShipping(storeConfig);
+  const shippingFee = numOr(shippingCfg.standardFee, 80);
+  const freeShippingThreshold = numOr(shippingCfg.freeShippingThreshold, 1499);
+  const metroDeliveryDays = shippingCfg.metroDeliveryDays || '3-5 Business Days';
+  const waPhone = getPhone(storeConfig);
+  const { upiId, payeeName } = getUpiConfig(storeConfig);
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     fetch('/data/products.json')
@@ -48,10 +58,10 @@ export default function ProductDetailPage() {
         );
         if (match) {
           setProduct(match);
-          if (match.sizes && match.sizes.length > 0) {
-            const firstInStock = match.sizes.find((sz) => (match.stockBySize?.[sz] !== undefined ? match.stockBySize[sz] > 0 : (match.inStock !== false))) || match.sizes[0];
-            setSelectedSize(firstInStock);
-          }
+          const sizeList = Array.isArray(match.sizes) && match.sizes.length > 0 ? match.sizes : ['S', 'M', 'L', 'XL'];
+          const firstInStock = sizeList.find((sz) => (match.stockBySize?.[sz] !== undefined ? Number(match.stockBySize[sz]) > 0 : match.inStock !== false)) || sizeList[0];
+          setSelectedSize(firstInStock);
+          setQuantity(1); // reset quantity when navigating between products
         }
       })
       .catch((err) => console.error('Error fetching product data:', err))
@@ -101,7 +111,7 @@ export default function ProductDetailPage() {
       : null;
 
   const directWhatsAppText = `Hello Crown & Cross, I would like to buy:\n\nKit: ${product.name}\nQuality: ${product.subCategory}\nSize: ${selectedSize}\nQuantity: ${quantity}\nPrice: ₹${product.price * quantity}\n\nPlease confirm availability!`;
-  const directWhatsAppUrl = getWhatsAppUrl(directWhatsAppText);
+  const directWhatsAppUrl = getWhatsAppUrl(directWhatsAppText, waPhone);
 
   const relatedKits = (allProducts || [])
     .filter(
@@ -280,7 +290,7 @@ export default function ProductDetailPage() {
           >
             <Truck size={18} color="var(--gold-primary)" style={{ flexShrink: 0 }} />
             <div>
-              <strong>Pan-India Shipping:</strong> ₹80 (Free on orders above ₹1,499). Metro delivery in 3–5 days from Chennai.
+              <strong>Pan-India Shipping:</strong> ₹{shippingFee} (Free on orders above ₹{freeShippingThreshold.toLocaleString('en-IN')}). Metro delivery in {metroDeliveryDays} from Chennai.
             </div>
           </div>
 
@@ -410,10 +420,11 @@ export default function ProductDetailPage() {
             const currentStock = product.stockBySize?.[selectedSize] !== undefined
               ? Number(product.stockBySize[selectedSize])
               : (product.inStock ? 10 : 0);
-            const itemInCart = items?.find(
-              (i) => i.id === product.id && i.size === selectedSize && (i.subCategory === product.subCategory || !i.subCategory)
-            );
-            const inCartQty = itemInCart ? itemInCart.quantity : 0;
+            const inCartQty = items
+              ? items
+                  .filter((i) => i.id === product.id && i.size === selectedSize)
+                  .reduce((acc, i) => acc + i.quantity, 0)
+              : 0;
             const remainingStock = Math.max(0, currentStock - inCartQty);
             const isOutOfStock = currentStock <= 0;
             const isMaxInCart = currentStock > 0 && inCartQty >= currentStock;
@@ -524,10 +535,11 @@ export default function ProductDetailPage() {
               const currentStock = product.stockBySize?.[selectedSize] !== undefined
                 ? Number(product.stockBySize[selectedSize])
                 : (product.inStock ? 10 : 0);
-              const itemInCart = items?.find(
-                (i) => i.id === product.id && i.size === selectedSize && (i.subCategory === product.subCategory || !i.subCategory)
-              );
-              const inCartQty = itemInCart ? itemInCart.quantity : 0;
+              const inCartQty = items
+                ? items
+                    .filter((i) => i.id === product.id && i.size === selectedSize)
+                    .reduce((acc, i) => acc + i.quantity, 0)
+                : 0;
               const remainingStock = Math.max(0, currentStock - inCartQty);
               const isSoldOut = currentStock <= 0;
               const isMaxInCart = currentStock > 0 && inCartQty >= currentStock;
@@ -603,9 +615,9 @@ export default function ProductDetailPage() {
                     onClick={(e) => {
                       if (isSoldOut) {
                         e.preventDefault();
-                        triggerWhatsApp({ text: `Hello Crown & Cross, when will "${product.name}" in Size ${selectedSize} be back in stock?`, e });
+                        triggerWhatsApp({ text: `Hello Crown & Cross, when will "${product.name}" in Size ${selectedSize} be back in stock?`, phone: waPhone, e });
                       } else {
-                        triggerWhatsApp({ text: directWhatsAppText, e });
+                        triggerWhatsApp({ text: directWhatsAppText, phone: waPhone, e });
                       }
                     }}
                     target="_blank"
@@ -634,7 +646,7 @@ export default function ProductDetailPage() {
                   {/* Mobile Only: 1-Tap UPI App Launcher (Android & iPhone) */}
                   {!isSoldOut && (
                     <a
-                      href={`upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement&am=${product.price * quantity}&tn=${encodeURIComponent(`Order ${(product.name || 'Jersey').slice(0, 20)}`)}&cu=INR`}
+                      href={`upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${product.price * quantity}&tn=${encodeURIComponent(`Order ${(product.name || 'Jersey').slice(0, 20)}`)}&cu=INR`}
                       className="mobile-only-pdp-upi-btn"
                       title="Open installed UPI app (GPay, PhonePe, Paytm, CRED, BHIM)"
                     >
