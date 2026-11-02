@@ -99,6 +99,7 @@
       ],
       "featured": true,
       "isBestSeller": true,
+      "isRetro": false,
       "description": "The regal pure white jersey accented by gold and navy trims celebrating Real Madrid's European dominance. Authentic Player Version with heat-sealed crest and breathable micro-mesh side vents."
     },
     {
@@ -163,6 +164,7 @@
         "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=800&q=80"
       ],
       "featured": false,
+      "isRetro": false,
       "description": "Stunning glitched origami crow graphic inspired by manga and traditional Japanese paper craft. Crisp sublimation dye print that will never fade or peel."
     },
     {
@@ -224,6 +226,7 @@
         "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80"
       ],
       "featured": false,
+      "isRetro": false,
       "description": "The historic 5th star winning Canary Yellow kit worn by R9 Ronaldo in Yokohama. Authentic double-layer mesh construction with vibrant green detailing."
     }
   ]
