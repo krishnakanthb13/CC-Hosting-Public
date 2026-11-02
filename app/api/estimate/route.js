@@ -1,9 +1,52 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
+// All customer-supplied strings are HTML-escaped before interpolation into the
+// email template — this endpoint is public and must never reflect raw markup.
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return ch;
+    }
+  });
+}
+
+function cleanPhone(phone = '') {
+  return String(phone).replace(/[^0-9]/g, '').slice(0, 15);
+}
+
+function clampString(value, max) {
+  const s = typeof value === 'string' ? value.trim() : '';
+  return s.slice(0, max);
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const MAX_LENGTHS = {
+  name: 200,
+  phone: 30,
+  email: 254,
+  organization: 200,
+  kitType: 100,
+  qualityTier: 100,
+  customNames: 50,
+  notes: 5000
+};
+
 export async function POST(request) {
   try {
-    const payload = await request.json();
+    let payload;
+    try {
+      payload = await request.json();
+    } catch (parseErr) {
+      return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
+    }
+
     const {
       name,
       phone,
@@ -14,14 +57,37 @@ export async function POST(request) {
       quantity,
       customNames,
       notes
-    } = payload;
+    } = payload || {};
 
-    if (!name || !phone) {
+    // --- Validation & normalization (all values capped to sane lengths) ---
+    const safeName = clampString(name, MAX_LENGTHS.name);
+    const safePhone = clampString(phone, MAX_LENGTHS.phone);
+    const safeEmail = clampString(email, MAX_LENGTHS.email);
+    const safeOrganization = clampString(organization, MAX_LENGTHS.organization);
+    const safeKitType = clampString(kitType, MAX_LENGTHS.kitType);
+    const safeQualityTier = clampString(qualityTier, MAX_LENGTHS.qualityTier);
+    const safeCustomNames = clampString(customNames, MAX_LENGTHS.customNames);
+    const safeNotes = clampString(notes, MAX_LENGTHS.notes);
+
+    if (!safeName) {
+      return NextResponse.json({ error: 'Name is required.' }, { status: 400 });
+    }
+
+    const phoneDigits = cleanPhone(safePhone);
+    if (!safePhone || phoneDigits.length < 8 || phoneDigits.length > 15) {
       return NextResponse.json(
-        { error: 'Name and phone number are required.' },
+        { error: 'A valid WhatsApp phone number (8-15 digits) is required.' },
         { status: 400 }
       );
     }
+
+    if (safeEmail && !EMAIL_RE.test(safeEmail)) {
+      return NextResponse.json({ error: 'Invalid email format.' }, { status: 400 });
+    }
+
+    let safeQuantity = parseInt(quantity, 10);
+    if (!Number.isFinite(safeQuantity)) safeQuantity = 10;
+    safeQuantity = Math.min(10000, Math.max(1, safeQuantity));
 
     const apiKey = process.env.RESEND_API_KEY;
     const recipient = process.env.ESTIMATE_NOTIFICATION_EMAIL || 'crownandcross29@gmail.com';
@@ -40,7 +106,11 @@ export async function POST(request) {
 
     const resend = new Resend(apiKey);
 
-    const emailSubject = `👑 New Estimate Request: ${name} (${quantity || 10} kits - ${kitType || 'Team Kit'})`;
+    // Strip newlines — email subjects must stay single-line
+    const emailSubject = `New Estimate Request: ${safeName} (${safeQuantity} kits - ${safeKitType || 'Team Kit'})`.replace(
+      /[\r\n]+/g,
+      ' '
+    );
 
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0d140f; color: #f2f6f3; padding: 32px 20px;">
@@ -58,48 +128,48 @@ export async function POST(request) {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9; width: 40%;">Customer Name:</td>
-                <td style="padding: 10px 0; color: #f2f6f3; font-weight: bold;">${name}</td>
+                <td style="padding: 10px 0; color: #f2f6f3; font-weight: bold;">${escapeHtml(safeName)}</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">WhatsApp Phone:</td>
                 <td style="padding: 10px 0;">
-                  <a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}" style="color: #4ade80; text-decoration: none; font-weight: bold;">
-                    ${phone} (Chat on WhatsApp)
+                  <a href="https://wa.me/${phoneDigits}" style="color: #4ade80; text-decoration: none; font-weight: bold;">
+                    ${escapeHtml(safePhone)} (Chat on WhatsApp)
                   </a>
                 </td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Customer Email:</td>
-                <td style="padding: 10px 0; color: #f2f6f3;">${email || 'Not provided'}</td>
+                <td style="padding: 10px 0; color: #f2f6f3;">${escapeHtml(safeEmail) || 'Not provided'}</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Team / Organization:</td>
-                <td style="padding: 10px 0; color: #c8a96a; font-weight: bold;">${organization || 'Individual'}</td>
+                <td style="padding: 10px 0; color: #c8a96a; font-weight: bold;">${escapeHtml(safeOrganization) || 'Individual'}</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Kit Type:</td>
-                <td style="padding: 10px 0; color: #f2f6f3;">${kitType}</td>
+                <td style="padding: 10px 0; color: #f2f6f3;">${escapeHtml(safeKitType)}</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Quality Standard:</td>
-                <td style="padding: 10px 0; color: #f2f6f3;">${qualityTier}</td>
+                <td style="padding: 10px 0; color: #f2f6f3;">${escapeHtml(safeQualityTier)}</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Quantity:</td>
-                <td style="padding: 10px 0; color: #c8a96a; font-weight: bold; font-size: 16px;">${quantity} kits</td>
+                <td style="padding: 10px 0; color: #c8a96a; font-weight: bold; font-size: 16px;">${safeQuantity} kits</td>
               </tr>
               <tr style="border-bottom: 1px solid #233428;">
                 <td style="padding: 10px 0; color: #a4b6a9;">Custom Printing:</td>
-                <td style="padding: 10px 0; color: #f2f6f3;">${customNames}</td>
+                <td style="padding: 10px 0; color: #f2f6f3;">${escapeHtml(safeCustomNames)}</td>
               </tr>
               <tr>
                 <td style="padding: 10px 0; color: #a4b6a9; vertical-align: top;">Notes &amp; Requirements:</td>
-                <td style="padding: 10px 0; color: #f2f6f3; white-space: pre-wrap;">${notes || 'None specified.'}</td>
+                <td style="padding: 10px 0; color: #f2f6f3; white-space: pre-wrap;">${escapeHtml(safeNotes) || 'None specified.'}</td>
               </tr>
             </table>
 
             <div style="text-align: center; margin-top: 28px;">
-              <a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}" style="display: inline-block; background-color: #22c55e; color: #0d140f; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 999px; font-size: 14px;">
+              <a href="https://wa.me/${phoneDigits}" style="display: inline-block; background-color: #22c55e; color: #0d140f; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 999px; font-size: 14px;">
                 Reply to Customer on WhatsApp →
               </a>
             </div>
@@ -117,7 +187,7 @@ export async function POST(request) {
       to: recipient,
       subject: emailSubject,
       html: htmlContent,
-      replyTo: email || recipient
+      replyTo: safeEmail || recipient
     });
 
     if (sendResult.error) {
