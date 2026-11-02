@@ -32,7 +32,8 @@ CC-Hosting-Public/
 ├── context/
 │   └── CartContext.jsx          # React Context for cart state & LocalStorage
 ├── lib/
-│   ├── products.js              # Data reader for products.json
+│   ├── products.js              # Server-side reader for products.json (SSR pages)
+│   ├── storeConfig.js           # Cached client config fetch + fallbacks + useStoreConfig()
 │   └── whatsapp.js              # Universal cross-platform WhatsApp launcher
 ├── public/
 │   ├── data/products.json       # Master catalog database
@@ -45,13 +46,15 @@ CC-Hosting-Public/
 
 ## 2. State Management: `context/CartContext.jsx`
 
-The global shopping cart is managed via React Context and automatically synchronizes with browser `localStorage` under scoped keys `cc_cart_v1` and `cc_customer_v1`. 
+The global shopping cart is managed via React Context and automatically synchronizes with browser `localStorage` under scoped keys `crown_and_cross_cart_v1` and `crown_and_cross_customer_v1` (legacy `cc_cart` / `cc_customer` payloads are still read for migration).
 
 ### Key Capabilities & Reliability Guards:
-- **Scoped Storage Keys & Origin Validation:** Storage keys are namespaced (`cc_cart_v1`, `cc_customer_v1`) to isolate shopping session data and avoid collisions with external or legacy scripts.
+- **Scoped Storage Keys & Origin Validation:** Storage keys are namespaced (`crown_and_cross_cart_v1`, `crown_and_cross_customer_v1`) and wrapped in an app-signature + origin envelope to isolate shopping session data from external or legacy scripts.
+- **Live Inventory Revalidation:** After hydration, the cart is reconciled against the current catalog (via `lib/storeConfig.js`): sold-out sizes are dropped, quantities capped to current per-size stock, prices refreshed, and a toast summarises adjustments.
+- **Config-Driven Shipping:** `shipping` and free-shipping thresholds derive from `products.json` (`brand.shipping`) with `80`/`1499` fallbacks — the admin portal controls them.
 - **Hydration Gating (`isLoaded`):** Protects against Server-Side Rendering (SSR) discrepancies and prevents the initial empty state from prematurely wiping stored cart or customer information during component mount.
 - **Multi-Tab Synchronization:** A `window.addEventListener('storage', ...)` listener monitors cross-tab modifications, keeping badge counts and cart items in immediate sync across all open browser tabs.
-- **Sanitization & Payload Defensive Checks:** Enforces strict array typing on cart items, clamps quantities (`Math.max(1, qty)`), and sanitizes customer fields (`name`, `phone`, `address`, `city`, `pincode`, `note`).
+- **Sanitization & Payload Defensive Checks:** Enforces strict array typing on cart items (valid id/name/numeric price/positive quantity), rebuilds deterministic composite keys, and sanitizes customer fields (`name`, `phone`, `address`, `city`, `pincode`, `note`).
 - **Standardized Order ID Generator:** Creates collision-resistant, human-friendly order references using base36 epoch timestamps and random entropy tokens (e.g. `CC-M3X9K2-7A9B`).
 
 ### Exposed Context Values:
@@ -62,12 +65,22 @@ The global shopping cart is managed via React Context and automatically synchron
 - **`updateQuantity(key, delta)`**: Modifies item count; automatically removes line items when quantity drops to 0.
 - **`removeItem(key)`**: Deletes a specific line item by compound key.
 - **`subtotal`**: Sum of item prices × quantities.
-- **`isFreeShipping`**: Boolean (`subtotal >= 1499`).
-- **`shipping`**: `0` if cart is empty or free shipping unlocked, otherwise `80` (Standard fee).
+- **`isFreeShipping`**: Boolean (`subtotal >= brand.shipping.freeShippingThreshold`, fallback `1499`).
+- **`shipping`**: `0` if cart is empty or free shipping unlocked, otherwise `brand.shipping.standardFee` (fallback `80`).
 - **`grandTotal`**: `subtotal + shipping`.
-- **`amountToFreeShipping`**: `Math.max(0, 1499 - subtotal)`.
+- **`amountToFreeShipping`**: `Math.max(0, threshold - subtotal)`.
 - **`freeShippingProgress`**: Percentage (`0` to `100%`) driving the Cart Drawer progress bar.
 - **`activeUpiOrder` / `setActiveUpiOrder`**: Controls the visibility and payload of the instant UPI QR payment modal.
+
+---
+
+## 2b. Store Configuration Layer: `lib/storeConfig.js`
+
+Single cached client-side source of truth for `products.json` (`brand`, `categories`, `subCategories`, `products`):
+- **One fetch, many consumers:** `fetchStoreConfig()` memoizes a module-level promise so the cart, home page, PDP, navbar, footer, search modal, and UPI modal all share a single request.
+- **`useStoreConfig()`** returns `{ config, loaded }`; consumers render immediately with safe fallback constants and upgrade when data arrives.
+- **Helpers:** `getBrand`, `getShipping`, `getExchange`, `getCategoryNames`, `getSubCategoryNames`, `getUpiConfig`, `getPhone`, `numOr` — each falls back to built-in defaults (`₹80` / `₹1,499` / `+917695924602` / `jasonclement.jm-1@okhdfcbank` / Club·Country·Retro) so the UI never breaks while loading or offline.
+- **Server-side counterpart:** policy pages import `getBrandConfig()` from `lib/products.js` and export `dynamic = 'force-dynamic'`, so their rendered rates/contacts always reflect the latest admin-edited file.
 
 ---
 
@@ -96,9 +109,9 @@ Structured message payloads include:
 - Customer delivery address and optional notes
 
 ### Dynamic Client-Side UPI QR (`components/UpiModal.jsx`)
-Encodes a standard NPCI UPI URI:
+Encodes a standard NPCI UPI URI. `pa`/`pn` come from `products.json` (`brand.upiId` / `brand.payeeName`) via `lib/storeConfig.js` — the admin portal controls the payee:
 ```
-upi://pay?pa=jasonclement.jm-1@okhdfcbank&pn=Jason%20Clement&am={grandTotal}&tn=Order%20{orderId}&tr={refId}&mode=02&cu=INR
+upi://pay?pa={brand.upiId}&pn={encodeURIComponent(brand.payeeName)}&am={grandTotal}&tn=Order%20{orderId}&tr={refId}&mode=02&cu=INR
 ```
 - **Live QR Rendering:** The `qrcode` package converts this URI to a high-resolution base64 PNG data URL in the user's browser, allowing payment through Google Pay, PhonePe, Paytm, or BHIM without any backend server.
 - **Transaction Reference & Note:** Pre-fills `tn=Order {orderId}` and `tr={refId}` for transparent bank-statement reconciliation.
@@ -131,9 +144,14 @@ Powered by the official **Resend** SDK (`resend`).
 }
 ```
 
+### Input Validation & Security:
+- Every customer-supplied field is HTML-escaped before interpolation into the email template (prevents HTML/script injection into the notification email).
+- `name` is required (≤200 chars); `phone` must contain 8–15 digits; `email` (optional) must match a basic address format; `quantity` is parsed and clamped to 1–10,000; all string fields are length-capped.
+- The email subject is newline-stripped to prevent header splitting.
+
 ### Response Codes:
 - `200 OK`: `{ success: true, id: "msg_xxx", message: "Estimate request emailed to crownandcross29@gmail.com successfully." }`
-- `400 Bad Request`: Missing mandatory fields (`name` or `phone`).
+- `400 Bad Request`: Missing/invalid mandatory fields (`name`, `phone` digits, `email` format).
 - `503 Service Unavailable`: Triggered if `RESEND_API_KEY` is missing or set to placeholder; frontend gracefully exposes direct WhatsApp and `mailto:` buttons.
 - `502 Bad Gateway`: Upstream Resend API delivery rejection.
 
@@ -180,7 +198,7 @@ The storefront is engineered for seamless rendering across **Large**, **Medium**
 13. **Dual-Track Infinite Announcement Marquee (`globals.css` & `Navbar.jsx`):** On screens $\le 860\text{px}$, the top announcement bar displays two mirrored `.announcement-track` rows governed by `@keyframes bannerMarquee` (26s linear loop). Eliminates text truncation while supporting touch horizontal swiping and hover pause.
 14. **Universal Product Search Engine (`components/SearchModal.jsx`):**
     - Accessible via header magnifying glass, mobile menu drawer, and global keyboard shortcut (`Ctrl+K` / `Cmd+K`).
-    - Queries `products.json` dynamically with multi-keyword token matching (`name`, `team`, `season`, `subCategory`, `description`).
+    - Queries the shared catalog (via `lib/storeConfig.js`) with case-insensitive substring matching across `name`, `team`, `season`, `category`, `subCategory`, and `description`.
     - Surfaces exact kit names, quality badges, live pricing, stock availability, and quick suggestion pills ("Real Madrid", "Argentina", "Retro").
     - 1-click navigation routes directly to `/product/[id]` with auto modal closure.
 15. **Cross-Platform Instagram Integration:**
